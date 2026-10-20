@@ -48,6 +48,8 @@ jobs:
 
       - name: Smoke — boot web-only mode
         run: |
+          # SQLite path is env-driven (prisma/schema.prisma) — set it for CI.
+          export DATABASE_URL=file:../db/kia.db
           NODE_ENV=production PORT=3999 MCP_TOKEN_SECRET=ci-secret OWNER_IDS=1 \
           npx prisma db push --skip-generate
           NODE_ENV=production PORT=3999 MCP_TOKEN_SECRET=ci-secret OWNER_IDS=1 \
