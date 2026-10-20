@@ -1419,8 +1419,32 @@ def build_app():
                             background=BackgroundTask(os.remove, tmp))
 
     async def _save_upload(request: Request, max_mb: int) -> str:
-        """Stream the multipart body (single file field 'file') to a temp path."""
+        """آپلود را در مسیر موقت می‌ریزد — هم multipart (پنل ادمین) هم بدنهٔ خام (curl).
+
+        ریشهٔ باگ «file is not a database»: پنل با FormData می‌فرستد ولی قدیم
+        کل بدنهٔ multipart (boundary + هدرها + بایت فایل) روی دیسک ریخته می‌شد.
+        """
         tmp = os.path.join(tempfile.gettempdir(), f"mp-restore-{int(time.time()*1000)}.bin")
+        ctype = request.headers.get("content-type", "")
+        if ctype.startswith("multipart/form-data"):
+            form = await request.form()
+            upload = None
+            for _k, v in form.multi_items():
+                if hasattr(v, "read") and hasattr(v, "filename"):
+                    upload = v
+                    break
+            if upload is None:
+                raise HTTPException(400, "فایلی دریافت نشد")
+            with open(tmp, "wb") as out:
+                shutil.copyfileobj(upload.file, out)
+            size = os.path.getsize(tmp)
+            if size == 0:
+                os.remove(tmp)
+                raise HTTPException(400, "فایلی دریافت نشد")
+            if size > max_mb * 1024 * 1024:
+                os.remove(tmp)
+                raise HTTPException(413, "فایل بزرگ‌تر از حد مجاز است")
+            return tmp
         total = 0
         limit = max_mb * 1024 * 1024
         with open(tmp, "wb") as f:
@@ -1441,6 +1465,39 @@ def build_app():
         _guard(request)
         tmp = await _save_upload(request, max_mb=300)
         try:
+            # اگر zip آمده (خطای رایج)، دیتابیس داخلش را درمی‌آوریم
+            with open(tmp, "rb") as fh:
+                magic = fh.read(4)
+            zip_note = ""
+            if magic[:2] == b"PK":
+                def _unzip() -> str:
+                    inner = tmp + ".db"
+                    with zipfile.ZipFile(tmp) as z:
+                        infos = [i for i in z.infolist() if not i.is_dir()]
+                        if not infos:
+                            raise ValueError("فایل zip خالی است")
+                        dbs = [i for i in infos
+                               if i.filename.lower().endswith((".db", ".sqlite"))]
+                        pick = max(dbs or infos, key=lambda i: i.file_size)
+                        with z.open(pick) as src, open(inner, "wb") as dst:
+                            shutil.copyfileobj(src, dst)
+                        return os.path.basename(pick.filename)
+                inner_name = await asyncio.to_thread(_unzip)
+                os.replace(tmp + ".db", tmp)
+                zip_note = f"دیتابیس داخل zip: {inner_name}"
+
+            # سرآند باید دقیقاً هدر SQLite باشد
+            with open(tmp, "rb") as fh:
+                head = fh.read(16)
+            if head != b"SQLite format 3\x00":
+                os.remove(tmp)
+                raise HTTPException(
+                    400,
+                    "بازیابی ناموفق: این فایل دیتابیس SQLite نیست. "
+                    "فایل درست = خروجی خام دیتابیس (شروع با «SQLite format 3»). "
+                    "اگر zip است، .db داخلش را آپلود کن؛ اگر از تلگرام دانلود "
+                    "کرده‌ای ممکن است فایل خراب شده باشد — فایل اصلی را دوباره بفرست.")
+
             def _validate():
                 import sqlite3
                 con = sqlite3.connect(tmp)
@@ -1465,8 +1522,9 @@ def build_app():
             os.replace(tmp, pending)
             return {
                 "ok": True,
-                "message": "فایل معتبر بود و صفِ بازیابی شد ✅\n"
-                           "الان سرویس را Restart کن — بعد از بالا آمدن، "
+                "message": "فایل معتبر بود و صفِ بازیابی شد ✅"
+                           + (f"\n{zip_note}" if zip_note else "")
+                           + "\nالان سرویس را Restart کن — بعد از بالا آمدن، "
                            "دیتابیس جایگزین می‌شود (نسخهٔ قبلی به .pre-restore.bak نگه داشته می‌شود).",
             }
         except HTTPException:
