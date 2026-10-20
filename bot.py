@@ -71,10 +71,19 @@ async def main():
     except Exception as e:
         logger.warning("v2 feature tables skipped: %s", e)
 
-    bot = Bot(
-        token=config.BOT_TOKEN,
-        default=DefaultBotProperties(parse_mode="Markdown"),
-    )
+    from aiogram.utils.token import TokenValidationError
+    try:
+        bot = Bot(
+            token=config.BOT_TOKEN,
+            default=DefaultBotProperties(parse_mode="Markdown"),
+        )
+    except TokenValidationError:
+        logger.error(
+            "BOT_TOKEN نامعتبر است — بات بالا نمی‌آید. مقدار را عوض کن: "
+            "Railway → سرویس → Variables → BOT_TOKEN → توکن واقعی @BotFather "
+            "(فرمت صحیح: 123456789:AAH... بدون فاصله و بدون CHANGE_ME) "
+            "→ Save تا Redeploy بخورد.")
+        sys.exit(1)
     dp = Dispatcher()
 
     # v2.0.0: capture handler exceptions into the SQLite log trail.
