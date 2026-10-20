@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📈 تحلیل روژن — DropAgentX</title>
+<link rel="icon" href="/icon.svg">
+<style>
+:root{--bg:#0b0e17;--panel:#121726;--panel2:#1a2033;--line:rgba(255,255,255,.08);
+--txt:#e8ecf4;--dim:#8f99ad;--cyan:#22d3ee;--green:#34d399;--gold:#f5c451;--red:#f87171;--violet:#a78bfa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:Vazirmatn,Vazirmatn FD,Tahoma,sans-serif;padding:22px 18px;max-width:1080px;margin:0 auto;line-height:1.9}
+header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+h1{font-size:1.35rem}
+h1 b{background:linear-gradient(90deg,var(--cyan),var(--violet),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--dim);font-size:.85rem}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 16px;text-decoration:none;font-size:.85rem}
+.btn:hover{border-color:var(--cyan)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.kpi .v{font-size:1.35rem;font-weight:800}
+.kpi .t{color:var(--dim);font-size:.75rem}
+.kpi.g .v{color:var(--green)} .kpi.c .v{color:var(--cyan)} .kpi.y .v{color:var(--gold)} .kpi.v .v{color:var(--violet)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.card h3{font-size:.95rem;margin-bottom:8px;color:var(--dim);font-weight:600}
+svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:14px;font-size:.75rem;color:var(--dim);margin-top:6px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:4px}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}
+th{color:var(--dim);font-weight:600}
+.bar-row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:.83rem}
+.bar-row .lbl{flex:0 0 90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--cyan),var(--violet));min-width:3px}
+.empty{color:var(--dim);font-size:.85rem;padding:10px;text-align:center}
+#err{display:none;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:10px 14px;margin:10px 0;font-size:.85rem}
+footer{color:var(--dim);font-size:.75rem;text-align:center;margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📈 تحلیل <b>روژن</b></h1>
+    <div class="sub">۱۴ روز اخیر · به‌روزرسانی خودکار هر ۶۰ ثانیه</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a class="btn" href="/admin">← پنل ادمین</a>
+    <a class="btn" href="/api/admin/export/users.csv">⬇️ کاربران CSV</a>
+    <a class="btn" href="/api/admin/export/sales.csv">⬇️ فروش CSV</a>
+  </div>
+</header>
+<div id="err"></div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="grid">
+  <div class="card">
+    <h3>👥 کاربر — جدید در برابر فعال (روزانه)</h3>
+    <div id="chartUsers"></div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--cyan)"></i>کاربر جدید</span>
+      <span><i class="dot" style="background:var(--violet)"></i>فعال</span>
+    </div>
+  </div>
+  <div class="card">
+    <h3>💳 گردش خرید (کردیت در روز)</h3>
+    <div id="chartGmv"></div>
+    <div class="legend"><span><i class="dot" style="background:var(--gold)"></i>GMV روزانه</span></div>
+  </div>
+  <div class="card">
+    <h3>🏆 پرفروش‌ترین محصولات</h3>
+    <div id="topProducts"></div>
+  </div>
+  <div class="card">
+    <h3>🗂 توزیع دسته‌بندی محصولات فعال</h3>
+    <div id="topCats"></div>
+  </div>
+</div>
+
+<footer>DropAgentX 0.9.9 «روژن» · تحلیل از دل دیتابیس خودت — بدون سرویس بیرونی</footer>
+
+<script>
+const esc=s=>(s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Number(n||0).toLocaleString('fa-IR');
+
+function kpis(t){
+  const items=[
+    ['کاربران کل',fmt(t.users),'g'],['فعال ۷ روز',fmt(t.active7),'c'],
+    ['جدید ۷ روز',fmt(t.new7),'c'],['فروش ۱۴ روز',fmt(t.sales14),'y'],
+    ['گردش ۱۴ روز',fmt(t.gmv14),'y'],['میانگین سبد',fmt(t.aov),'v']];
+  document.getElementById('kpis').innerHTML=
+    items.map(([k,v,c])=>`<div class="kpi ${c}"><div class="v">${v}</div><div class="t">${k}</div></div>`).join('');
+}
+
+/* چارت خطی SVG خالص — دو سری */
+function lineChart(el,labels,s1,s2,c1,c2){
+  const W=560,H=200,P=26,max=Math.max(1,...s1,...s2);
+  const X=i=>P+i*((W-2*P)/Math.max(1,labels.length-1));
+  const Y=v=>H-P-(v/max)*(H-2*P);
+  const path=s=>s.map((v,i)=>`${i?'L':'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  let grid='';
+  for(let g=0;g<=3;g++){const y=P+g*((H-2*P)/3);
+    grid+=`<line x1="${P}" y1="${y}" x2="${W-P}" y2="${y}" stroke="rgba(255,255,255,.06)"/>
+           <text x="${W-P+3}" y="${y+4}" fill="#8f99ad" font-size="9">${Math.round(max*(1-g/3))}</text>`;}
+  const lbls=labels.map((d,i)=>i%Math.ceil(labels.length/7)===0?
+    `<text x="${X(i)}" y="${H-6}" fill="#8f99ad" font-size="9" text-anchor="middle">${d}</text>`:'').join('');
+  document.getElementById(el).innerHTML=
+    `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      ${grid}
+      <path d="${path(s2)}" fill="none" stroke="${c2}" stroke-width="2.2" stroke-linejoin="round" opacity=".9"/>
+      <path d="${path(s1)}" fill="none" stroke="${c1}" stroke-width="2.2" stroke-linejoin="round"/>
+      ${s1.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="2.6" fill="${c1}"/>`).join('')}
+      ${lbls}</svg>`;
+}
+
+/* چارت میله‌ای SVG خالص */
+function barChart(el,labels,vals,color){
+  const W=560,H=200,P=26,max=Math.max(1,...vals);
+  const bw=(W-2*P)/vals.length;
+  let bars=vals.map((v,i)=>{
+    const h=(v/max)*(H-2*P);
+    return `<rect x="${(P+i*bw+bw*0.18).toFixed(1)}" y="${(H-P-h).toFixed(1)}" width="${(bw*0.64).toFixed(1)}" height="${Math.max(h,1).toFixed(1)}" rx="3" fill="${color}" opacity=".85">
+      </rect><title>${labels[i]}: ${fmt(v)}</title>`;}).join('');
+  let grid='';
+  for(let g=0;g<=3;g++){const y=P+g*((H-2*P)/3);
+    grid+=`<line x1="${P}" y1="${y}" x2="${W-P}" y2="${y}" stroke="rgba(255,255,255,.06)"/>
+           <text x="${W-P+3}" y="${y+4}" fill="#8f99ad" font-size="9">${Math.round(max*(1-g/3))}</text>`;}
+  const lbls=labels.map((d,i)=>i%Math.ceil(labels.length/7)===0?
+    `<text x="${P+i*bw+bw/2}" y="${H-6}" fill="#8f99ad" font-size="9" text-anchor="middle">${d}</text>`:'').join('');
+  document.getElementById(el).innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${grid}${bars}${lbls}</svg>`;
+}
+
+function topProducts(items){
+  const el=document.getElementById('topProducts');
+  if(!items.length){el.innerHTML='<div class="empty">هنوز فروشی ثبت نشده — اولین کمپین را شروع کن 🚀</div>';return;}
+  const max=Math.max(...items.map(i=>i.sales_count),1);
+  el.innerHTML=items.map(p=>`<div class="bar-row">
+    <span class="lbl" title="${esc(p.title)}">${esc(p.title)}</span>
+    <span class="bar" style="width:${(p.sales_count/max*70)}%"></span>
+    <b class="num">${fmt(p.sales_count)}</b></div>`).join('');
+}
+
+function topCats(items){
+  const el=document.getElementById('topCats');
+  if(!items.length){el.innerHTML='<div class="empty">محصول فعالی نیست</div>';return;}
+  const max=Math.max(...items.map(i=>i.n),1);
+  el.innerHTML=items.map(c=>`<div class="bar-row">
+    <span class="lbl">${esc(c.category)}</span>
+    <span class="bar" style="width:${(c.n/max*70)}%"></span>
+    <b>${fmt(c.n)}</b></div>`).join('');
+}
+
+async function load(){
+  try{
+    const r=await fetch('/api/admin/insights');
+    if(r.status===401){location.href='/login';return;}
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    kpis(d.totals);
+    lineChart('chartUsers',d.series.days,d.series.new_users,d.series.active,'#22d3ee','#a78bfa');
+    barChart('chartGmv',d.series.days,d.series.gmv,'#f5c451');
+    topProducts(d.totals.top_products);
+    topCats(d.totals.top_categories);
+    document.getElementById('err').style.display='none';
+  }catch(e){
+    const el=document.getElementById('err');
+    el.style.display='block';
+    el.textContent='⚠️ بارگذاری تحلیل ناموفق: '+e.message+' — تلاش مجدد…';
+  }
+}
+load();
+setInterval(load,60000);
+</script>
+</body>
+</html>

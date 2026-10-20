@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔗 لینک‌های پلتفرم — DropAgentX</title>
+<meta name="theme-color" content="#0b0e17">
+<link rel="icon" href="/icon.svg">
+<style>
+:root{--bg:#0b0e17;--txt:#eef2fa;--dim:#9aa6bd;--cyan:#22d3ee;--violet:#a78bfa;--gold:#f5c451;--green:#34d399;--pink:#f472b6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--txt);font-family:Vazirmatn,Vazirmatn FD,Tahoma,sans-serif;
+     padding:34px 16px 60px;max-width:1060px;margin:0 auto;line-height:1.9;overflow-x:hidden}
+
+/* ── پس‌زمینهٔ شفق (aurora) ── */
+.aurora{position:fixed;inset:0;z-index:-2;overflow:hidden}
+.aurora i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}
+.aurora i:nth-child(1){width:420px;height:420px;background:#0ea5e9;top:-120px;right:-80px;animation:drift 16s ease-in-out infinite alternate}
+.aurora i:nth-child(2){width:380px;height:380px;background:#8b5cf6;bottom:-100px;left:-60px;animation:drift 20s ease-in-out infinite alternate-reverse}
+.aurora i:nth-child(3){width:260px;height:260px;background:#ec4899;top:38%;left:52%;opacity:.28;animation:drift 24s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,26px) scale(1.12)}}
+.grid-bg{position:fixed;inset:0;z-index:-1;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 40%,transparent 100%)}
+
+header{text-align:center;margin-bottom:30px}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:7px 18px;border-radius:999px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-size:.8rem;color:var(--dim)}
+.badge b{color:var(--cyan)}
+h1{font-size:2rem;margin:14px 0 6px;font-weight:900}
+h1 span{background:linear-gradient(90deg,var(--cyan),var(--violet),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--dim);font-size:.92rem}
+
+h2{display:flex;align-items:center;gap:10px;font-size:1.05rem;margin:30px 4px 14px;color:var(--txt)}
+h2 .line{flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.22),transparent)}
+
+/* ── دکمه‌های شیشه‌ای ── */
+.glass{position:relative;display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:20px;
+  text-decoration:none;color:var(--txt);
+  background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+  backdrop-filter:blur(18px) saturate(165%);-webkit-backdrop-filter:blur(18px) saturate(165%);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 8px 32px rgba(2,6,23,.45), inset 0 1px 0 rgba(255,255,255,.18);
+  transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  overflow:hidden}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.10) 46%,transparent 60%);
+  transform:translateX(-120%);transition:transform .6s ease}
+.glass:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.34);
+  box-shadow:0 16px 44px rgba(34,211,238,.16), inset 0 1px 0 rgba(255,255,255,.24)}
+.glass:hover::after{transform:translateX(120%)}
+.glass:active{transform:translateY(-1px) scale(.99)}
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+  .glass{background:rgba(23,29,46,.92)}   /* فالبک مرورگرهای قدیمی */
+}
+.glass .ic{flex:0 0 48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:1.35rem;background:linear-gradient(135deg,rgba(34,211,238,.20),rgba(167,139,250,.20));
+  border:1px solid rgba(255,255,255,.14)}
+.glass .tx{flex:1;min-width:0}
+.glass .t{font-weight:800;font-size:.98rem}
+.glass .d{color:var(--dim);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.glass .go{color:var(--dim);font-size:1.1rem;transition:transform .2s}
+.glass:hover .go{transform:translateX(-5px);color:var(--cyan)}
+.glass.c-gold .ic{background:linear-gradient(135deg,rgba(245,197,81,.22),rgba(234,88,12,.16))}
+.glass.c-green .ic{background:linear-gradient(135deg,rgba(52,211,153,.22),rgba(16,185,129,.16))}
+.glass.c-pink .ic{background:linear-gradient(135deg,rgba(244,114,182,.22),rgba(168,85,247,.16))}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+
+.foot{margin-top:36px;text-align:center;color:var(--dim);font-size:.78rem}
+.foot a{color:var(--cyan);text-decoration:none}
+.note{margin-top:10px;text-align:center;font-size:.8rem;color:var(--dim)}
+.note a{color:var(--gold);text-decoration:none;border-bottom:1px dashed rgba(245,197,81,.4)}
+</style>
+</head>
+<body>
+<div class="aurora"><i></i><i></i><i></i></div>
+<div class="grid-bg"></div>
+
+<header>
+  <div class="badge">🐘 DropAgentX <b>۱.۰.۰ «تک»</b></div>
+  <h1>همهٔ <span>آدرس‌های پلتفرم</span> یک‌جا</h1>
+  <div class="sub">دکمه‌های شیشه‌ای — هر درِ مغازه با یک لمس</div>
+</header>
+
+<h2>🛍 برای کاربران<span class="line"></span></h2>
+<div class="grid">
+  <a class="glass c-green" href="https://t.me/__BOT__" target="_blank" rel="noopener">
+    <span class="ic">🤖</span>
+    <span class="tx"><span class="t">ربات در تلگرام</span><span class="d" dir="ltr">@__BOT__</span></span>
+    <span class="go">←</span>
+  </a>
+  <a class="glass" href="/shop">
+    <span class="ic">🛒</span>
+    <span class="tx"><span class="t">فروشگاه وب (PWA)</span><span class="d">قابل نصب روی گوشی</span></span>
+    <span class="go">←</span>
+  </a>
+  <a class="glass" href="/landing">
+    <span class="ic">🚀</span>
+    <span class="tx"><span class="t">صفحهٔ لانچ</span><span class="d">ویترین معرفی محصول</span></span>
+    <span class="go">←</span>
+  </a>
+  <a class="glass" href="/showcase3d">
+    <span class="ic">🌌</span>
+    <span class="tx"><span class="t">گالری سه‌بعدی</span><span class="d">نمایش محصول در فضا</span></span>
+    <span class="go">←</span>
+  </a>
+  <a class="glass c-pink" href="https://t.me/__SUPPORT__" target="_blank" rel="noopener">
+    <span class="ic">🆘</span>
+    <span class="tx"><span class="t">پشتیبانی انسانی</span><span class="d" dir="ltr">@__SUPPORT__</span></span>
+    <span class="go">←</span>
+  </a>
+</div>
+
+<h2>🛡 برای ادمین<span class="line"></span></h2>
+__ADMIN_SECTION__
+
+<p class="foot">DropAgentX ۱.۰.۰ «تک» · <a href="https://t.me/__SUPPORT__" target="_blank" rel="noopener">ساخته‌شده با ❤️</a></p>
+</body>
+</html>

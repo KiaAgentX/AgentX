@@ -1,0 +1,43 @@
+# secrets — NEVER commit
+.env
+.env.*
+
+# runtime data
+data/
+uploads/
+*.db
+*.db-wal
+*.db-shm
+.restore-pending.db
+node_modules/
+*.session
+
+# python
+__pycache__/
+*.pyc
+venv/
+
+# local test scripts (optional keep)
+*_test.py
+smoke_test.py
+seed_live.py
+_fix_guards.py
+ai_probe.py
+
+# test artifacts (from file_tools tests)
+a.py
+b.py
+c.txt
+cfg.py
+src/
+old backups
+
+# local AI diagnostics scratch
+probe_*.txt
+smoke_*.txt
+
+# test / build artifacts
+.pytest_cache/
+.venv/
+*.zip
+

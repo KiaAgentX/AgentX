@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
+<title>🤝 CRM لیدها — DropAgentX</title>
+<link rel="icon" href="/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f1a;--panel:#121a2b;--panel2:#16203a;--line:#24304f;
+  --txt:#e7edf9;--mut:#8fa0c2;--gold:#f5c451;--green:#3ddc97;
+  --red:#ff6b6b;--blue:#5ea1ff;--violet:#a78bfa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 80% -10%,#1a2542 0%,var(--bg) 55%);
+  font-family:Vazirmatn,system-ui,sans-serif;color:var(--txt);min-height:100vh;padding:18px}
+a{color:var(--blue);text-decoration:none}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.top h1{font-size:20px;font-weight:800}
+.top .sp{flex:1}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+  border-radius:12px;padding:9px 16px;cursor:pointer;font-family:inherit;font-size:14px;
+  transition:.15s}
+.btn:hover{border-color:var(--gold);color:var(--gold)}
+.btn.gold{background:linear-gradient(135deg,#f5c451,#e0a52c);color:#1a1405;font-weight:800;border:0}
+.btn.gold:disabled{opacity:.5;cursor:not-allowed}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.card b{display:block;font-size:24px;font-weight:800;margin-top:2px}
+.card span{font-size:12px;color:var(--mut)}
+.c-new b{color:var(--blue)}.c-warm b{color:var(--gold)}
+.c-won b{color:var(--green)}.c-lost b{color:var(--red)}.c-total b{color:var(--violet)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:16px;margin-bottom:16px}
+.panel h2{font-size:15px;margin-bottom:10px;color:var(--gold)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+textarea{width:100%;min-height:130px;background:#0d1424;border:1px solid var(--line);
+  border-radius:12px;color:var(--txt);padding:12px;font-family:ui-monospace,Consolas,monospace;
+  font-size:13px;direction:ltr;text-align:left;resize:vertical}
+input,select{background:#0d1424;border:1px solid var(--line);border-radius:10px;
+  color:var(--txt);padding:9px 12px;font-family:inherit;font-size:14px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.hint{font-size:12px;color:var(--mut);margin-top:8px;line-height:1.9}
+#msg{font-size:13px;margin-top:8px;min-height:18px}
+#msg.ok{color:var(--green)}#msg.err{color:var(--red)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px}
+th{color:var(--mut);font-weight:600;text-align:right;padding:9px 8px;
+  border-bottom:1px solid var(--line);font-size:12px}
+td{padding:9px 8px;border-bottom:1px solid #1b2440;vertical-align:middle}
+tr:hover td{background:#141d33}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
+.b-new{background:#1d2f52;color:#8db8ff}.b-warm{background:#3a2f14;color:#f5c451}
+.b-won{background:#123726;color:#3ddc97}.b-lost{background:#3a1a1f;color:#ff8b8b}
+.rate{color:var(--gold);font-weight:700}
+.mut{color:var(--mut)}.ltr{direction:ltr;unicode-bidi:embed}
+footer{text-align:center;color:var(--mut);font-size:12px;margin-top:22px}
+@media(max-width:640px){body{padding:10px}.top h1{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>🤝 CRM لیدها <span class="mut" style="font-weight:400;font-size:13px">War Machine · v5.0.0</span></h1>
+  <div class="sp"></div>
+  <a class="btn" href="/admin">⬅ بازگشت به ادمین</a>
+  <a class="btn" href="/" target="_blank" rel="noopener">🏪 فروشگاه</a>
+</div>
+
+<div class="cards" id="cards">
+  <div class="card c-total"><span>کل لیدها</span><b id="s-total">—</b></div>
+  <div class="card c-new"><span>🆕 تازه</span><b id="s-new">—</b></div>
+  <div class="card c-warm"><span>🔥 گرم</span><b id="s-warm">—</b></div>
+  <div class="card c-won"><span>💰 بسته‌شده</span><b id="s-won">—</b></div>
+  <div class="card c-lost"><span>❄️ ازدست‌رفته</span><b id="s-lost">—</b></div>
+</div>
+
+<div class="panel">
+  <h2>📥 ایمپورت JSON هرمس</h2>
+  <textarea id="importBox" spellcheck="false" placeholder='[{"business":"Pasta Fresca","category":"Italian restaurant","city":"London","rating":4.6,"reviews":187,"instagram":"@handle","website":null,"sourceUrl":"https://...maps...","address":"...","phone":"..."}]'></textarea>
+  <div class="row" style="margin-top:10px">
+    <button class="btn gold" id="importBtn">ایمپورت (با دی‌دوپ خودکار)</button>
+    <button class="btn" id="sampleBtn">درج نمونه</button>
+    <button class="btn" id="wipeBtn">پاک‌کردن فیلد</button>
+  </div>
+  <div id="msg"></div>
+  <div class="hint">
+    کلید یونیک: <code class="ltr">business + city</code> (تکراری‌ها شمرده می‌شوند، رد نمی‌شوند) ·
+    کلیدهای جایگزین: <span class="ltr">name/title · area · stars · ig · url</span> ·
+    ایمپورت خط فرمان: <span class="ltr">python tools_validate_leads.py leads.json</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="row" style="margin-bottom:10px">
+    <h2 style="margin:0;flex:1">📋 لیست لیدها</h2>
+    <input id="q" placeholder="جستجو: نام / شهر / دسته…" style="min-width:200px">
+    <select id="stageFilter">
+      <option value="">همه استیج‌ها</option>
+      <option value="new">🆕 تازه</option>
+      <option value="warm">🔥 گرم</option>
+      <option value="won">💰 بسته‌شده</option>
+      <option value="lost">❄️ ازدست‌رفته</option>
+    </select>
+    <button class="btn" id="reloadBtn">🔄 بروزرسانی</button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>کسب‌وکار</th><th>شهر</th><th>دسته</th><th>ریتینگ</th>
+        <th>ریویو</th><th>منبع</th><th>استیج</th>
+      </tr></thead>
+      <tbody id="tbody"><tr><td colspan="8" class="mut" style="text-align:center">در حال بارگذاری…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>DropAgentX Ultimate · قیف فروش: تازه → گرم → بسته‌شده — ارسال پیام همیشه دستی است ✍️</footer>
+
+<script>
+const $=s=>document.querySelector(s);
+const HDR={'Content-Type':'application/json','x-requested-with':'fetch'};
+const STAGE_LABEL={new:'🆕 تازه',warm:'🔥 گرم',won:'💰 بسته‌شده',lost:'❄️ ازدست‌رفته'};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function say(text,ok){const m=$('#msg');m.textContent=text;m.className=ok?'ok':'err';}
+
+async function load(){
+  try{
+    const me=await fetch('/api/me').then(r=>r.json());
+    if(!me.admin){location.href='/login';return;}
+    const stage=$('#stageFilter').value, q=$('#q').value.trim();
+    const url='/api/prospects?stage='+encodeURIComponent(stage)+'&q='+encodeURIComponent(q);
+    const r=await fetch(url,{headers:HDR});
+    if(r.status===401){location.href='/login';return;}
+    const data=await r.json();
+    for(const k of ['total','new','warm','won','lost'])
+      $('#s-'+k).textContent=data.stats?.[k] ?? 0;
+    render(data.items||[]);
+  }catch(e){say('خطا در بارگذاری: '+e,true);}
+}
+
+function render(items){
+  const tb=$('#tbody');
+  if(!items.length){tb.innerHTML='<tr><td colspan="8" class="mut" style="text-align:center">هنوز لیدی ثبت نشده — JSON هرمس را ایمپورت کن.</td></tr>';return;}
+  tb.innerHTML=items.map(p=>`<tr>
+    <td class="mut">${p.id}</td>
+    <td><b>${esc(p.business)}</b><div class="mut" style="font-size:11.5px" dir="ltr">@${esc(p.instagram||'—')}</div></td>
+    <td>${esc(p.city)}</td>
+    <td class="mut">${esc(p.category||'—')}</td>
+    <td class="rate">${p.rating!=null?'★ '+Number(p.rating).toFixed(1):'—'}</td>
+    <td>${p.reviews!=null?Number(p.reviews).toLocaleString('en'):'—'}</td>
+    <td>${p.source_url?`<a class="ltr" href="${esc(p.source_url)}" target="_blank" rel="noopener">🔗</a>`:'<span class="mut">—</span>'}</td>
+    <td><select data-id="${p.id}" class="stsel">
+      ${['new','warm','won','lost'].map(s=>`<option value="${s}" ${p.stage===s?'selected':''}>${STAGE_LABEL[s]}</option>`).join('')}
+    </select></td>
+  </tr>`).join('');
+  tb.querySelectorAll('.stsel').forEach(el=>el.addEventListener('change',async e=>{
+    const id=e.target.dataset.id, stage=e.target.value;
+    const r=await fetch(`/api/prospects/${id}/stage`,{method:'POST',headers:HDR,body:JSON.stringify({stage})});
+    if(r.ok){say(`#${id} → ${STAGE_LABEL[stage]}`,true);load();}
+    else{say('تغییر استیج ناموفق بود',false);}
+  }));
+}
+
+$('#importBtn').addEventListener('click',async()=>{
+  let payload;
+  try{payload=JSON.parse($('#importBox').value);}
+  catch(e){say('JSON نامعتبر است — ابتدا درستش کن.',false);return;}
+  const btn=$('#importBtn');btn.disabled=true;btn.textContent='در حال ایمپورت…';
+  try{
+    const r=await fetch('/api/hermes/import',{method:'POST',headers:HDR,body:JSON.stringify(payload)});
+    const data=await r.json();
+    if(!r.ok){say('خطای سرور: '+(data.detail||r.status),false);return;}
+    let t=`✅ ${data.created} تازه · 🔁 ${data.duplicates} تکراری · ⏭ ${data.skipped} رد شد`;
+    if(data.errors?.length)t+=` — ${data.errors[0]}`;
+    say(t,data.created>0||data.duplicates>0);
+    $('#importBox').value='';load();
+  }catch(e){say('خطا: '+e,false);}
+  finally{btn.disabled=false;btn.textContent='ایمپورت (با دی‌دوپ خودکار)';}
+});
+
+$('#sampleBtn').addEventListener('click',()=>{
+  $('#importBox').value=JSON.stringify([
+    {business:"Pasta Fresca",category:"Italian restaurant",city:"London",rating:4.6,
+     reviews:187,instagram:"@pastafresca.ldn",website:null,
+     sourceUrl:"https://www.google.com/maps/place/...",address:"12 Old Compton St, London",
+     phone:"+44 20 7xxx xxxx",notes:"family-run, closed Mondays"},
+    {name:"Bella Caffe",cuisine:"Coffee shop",area:"London",stars:"4.3",ig:"@bellacaffe"}
+  ],null,2);
+});
+
+$('#wipeBtn').addEventListener('click',()=>{$('#importBox').value='';say('');});
+$('#reloadBtn').addEventListener('click',load);
+$('#stageFilter').addEventListener('change',load);
+let t=null;$('#q').addEventListener('input',()=>{clearTimeout(t);t=setTimeout(load,350);});
+load();
+</script>
+</body>
+</html>
