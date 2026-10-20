@@ -1,38 +1,27 @@
-# mirror.gcr.io: هنگِ چند دقیقه‌ای در «Building the image» معمولاًpull-rate-limit
-# ناشناس Docker Hub است — مخصوصاً وقتی چند دپلوی پشت‌سرهم می‌زنی. GCR میرور آزاد است.
-FROM mirror.gcr.io/library/python:3.12-slim
+# ── KIA DropAgentX — production image ────────────────────────────────────────
+FROM node:20-slim
+
+# OpenSSL is required by Prisma
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_DEFAULT_TIMEOUT=100 \
-    PIP_RETRIES=5
+# Install dependencies first (better layer caching)
+COPY package.json ./
+RUN npm install
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Tehran local time: Debian-slim ships without a tz database, so a plain
-# TZ=... env var is silently ignored and daily reports / log rotation roll at
-# UTC midnight (4:30am Tehran) instead. Placed after pip install to keep the
-# dependency layer cached.
-ENV TZ=Asia/Tehran
-RUN DEBIAN_FRONTEND=noninteractive apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-    && echo $TZ > /etc/timezone \
-    && rm -rf /var/lib/apt/lists/*
-
-# full app incl. web_admin.py + web/ templates + memory/skills/a2a modules
+# Copy source and build
 COPY . .
+RUN npx prisma generate && npm run build
 
-ENV WEB_PORT=8080 \
-    PYTHONUNBUFFERED=1
+# Default SQLite location (mount a Volume at /app/db on Railway)
+ENV NODE_ENV=production \
+    PORT=3000 \
+    DATABASE_URL=file:../db/kia.db
 
-EXPOSE 8080
+EXPOSE 3000
 
-# Railway healthcheck — /healthz is unauthenticated and returns {ok, version}.
-HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
-    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=5).status==200 else 1)"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["python", "bot.py"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/index.js"]

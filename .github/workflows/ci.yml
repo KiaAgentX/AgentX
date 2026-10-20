@@ -7,58 +7,50 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: lint · secrets · tests
+  ci:
+    name: typecheck · test · build · secrets
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-          cache: pip
+          node-version: 20
+          cache: npm
 
       - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Prisma generate
+        run: npx prisma generate
+
+      - name: Typecheck (src + tests, strict)
+        run: npm run typecheck
+
+      - name: Unit tests (node:test)
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Secret scan (no real credentials in the repo)
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          PATTERNS='(sk-[A-Za-z0-9_-]{30,})|(gh[pousr]_[A-Za-z0-9]{30,})|([0-9]{8,10}:[A-Za-z0-9_-]{35})|(AKIA[0-9A-Z]{16})|(-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----)'
+          HITS=$(grep -rEl "$PATTERNS" --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=db . || true)
+          if [ -n "$HITS" ]; then
+            echo "::error::Potential secrets committed:"
+            echo "$HITS"
+            exit 1
+          fi
 
-      - name: Syntax check (compileall)
-        run: python -m compileall -q -x 'web/vendor|web/senpai' .
-
-      - name: Ruff lint
-        run: ruff check .
-
-      - name: Secret scan (no real credentials)
+      - name: Smoke — boot web-only mode
         run: |
-          python - <<'PY'
-          import pathlib, re, sys
-          pats = [
-              re.compile(r"gh[pousr]_[A-Za-z0-9]{30,}"),
-              re.compile(r"sk-[A-Za-z0-9]{30,}"),
-              re.compile(r"SG\.[A-Za-z0-9_-]{20,}"),
-              re.compile(r"\b\d{8,10}:[A-Za-z0-9_-]{35}\b"),
-          ]
-          bad = []
-          skip = {"web/vendor", "docs/marketing", ".venv"}
-          for f in pathlib.Path(".").rglob("*"):
-              if not f.is_file() or f.suffix not in {".py", ".md", ".html", ".js", ".yml", ".yaml", ".json", ".env"} and f.name not in {".env.example"}:
-                  continue
-              if any(s in str(f) for s in skip):
-                  continue
-              try:
-                  txt = f.read_text(encoding="utf-8", errors="ignore")
-              except Exception:
-                  continue
-              for p in pats:
-                  if p.search(txt):
-                      bad.append(str(f))
-          if bad:
-              print("possible secrets in:", *bad, sep="\n  ")
-              sys.exit(1)
-          print("secret scan clean")
-          PY
-
-      - name: Pytest
-        run: pytest
+          NODE_ENV=production PORT=3999 MCP_TOKEN_SECRET=ci-secret OWNER_IDS=1 \
+          npx prisma db push --skip-generate
+          NODE_ENV=production PORT=3999 MCP_TOKEN_SECRET=ci-secret OWNER_IDS=1 \
+          node dist/index.js &
+          sleep 6
+          curl -fsS http://127.0.0.1:3999/healthz
+          curl -fsS http://127.0.0.1:3999/api/v1/overview > /dev/null
+          curl -fsS http://127.0.0.1:3999/api/v1/brand > /dev/null

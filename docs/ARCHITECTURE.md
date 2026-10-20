@@ -1,37 +1,61 @@
-# 🏗 معماری DropAgentX v4.0.0
+# Architecture — KIA DropAgentX
 
-## نقشه ماژول‌ها
+## Boot sequence (`src/index.ts`)
+
 ```
-bot.py                     ورود: دیسپچر + هندلر خطای سه‌منبعی + observability hooks
-config.py                  همه تنظیمات از env (dataclass Config)
-database.py (2,700+ خط)    لایه داده: ۳۰+ تیبل، مایگریشن خودکار، بخش‌های:
-                           · Commerce (خرید، کمیسیون، کد تخفیف سربازی)
-                           · Referral (مسترلینگ، جعبه‌شانس)
-                           · v2.0 Capacity (14 ابزار نگهداری)
-                           · v3.5 Growth (بونوس روزانه، promo، win-back)
-                           · v4.0 Tickets/Quests/Reports/Analytics
-handlers/ (15 روتر)        start · tasks · products · marketplace · ai_chat · wallet
-                           referral · profile · help · org · admin · admin_v2
-                           growth · quests · support
-hermes_engine.py           مغز AI: چندمدلی، redact secrets، dynamic settings
-memory2.py                 حافظه ۷فستی با وزن/زوال/استخراج LLM
-observability.py           لاگ JSON + app_logs + ErrorCapture middleware
-identity_rl.py             Q-learning هویت کاربر (۷ برچسب)
-gateway/ + shared/         مونوریپو: روتر LLM، فشرده‌ساز کانتکست، skills_guard
+connectDb → registerMcpApprovalHook → createWebServer(bot) → startCron → startBot
 ```
 
-## جریان داده (خريد تا تحويل)
+- **Web-only mode**: no `BOT_TOKEN` → dashboard + API still run (Railway healthcheck passes).
+- **Full mode**: bot boots with webhook (when `PUBLIC_URL` is set) or long-polling (dev).
+
+## Layers
+
+| Layer | Folder | Responsibility |
+|---|---|---|
+| Clients | `src/bot`, `public/`, `desktop/` | Telegram (grammY), PWA dashboard (vanilla JS + SSE), Electron shell |
+| HTTP | `src/web` | Express: REST `/api/v1`, SSE `/api/v1/stream`, static dashboard, Telegram webhook |
+| Intelligence | `src/agents` | Orchestrator (security gate → intent routing) + 6 specialists |
+| Security | `src/security` | 15-layer fail-closed pipeline, prompt-guard, redaction, RBAC, quotas, tokens |
+| Tools | `src/mcp` | MCP-style tool registry with signed fail-closed tokens; approval→execution hook |
+| Governance | `src/services/hitl.service.ts` | Approval queue: create/list/resolve/expire, risk levels, TTL |
+| Domain | `src/services` | wallet · marketplace · orders · coupons · quests · referrals · leaderboard · analytics · bookings · notifications · **lead CRM** |
+| Data | `prisma` + `db/` | 18 models on SQLite (Prisma) |
+| Platform | `src/ai`, `src/rag`, `src/i18n`, `src/cron`, `src/core` | AI adapter, knowledge base, 25 locales, scheduled jobs, event bus |
+
+## Event bus (`src/core/bus.ts`)
+
+Services **never** call Telegram directly. They emit typed events:
+
 ```
-کاربر → marketplace (کارت محصول) → commerce.purchase_with_credits
-  → تراکنش ATOMIC (کردیت، کمیسیون پلتفرم، کمیسیون ریفرال)
-  → تحویل: file_fileid تلگرام → فالبک دیسک → کپشن امن ۱۰۲۴ + توضیح تکه‌۴۰۹۶
-  → دکمه ⭐ امتیاز (v3.5) → reviews → میانگین در analytics فروشنده (v4)
+wallet_tx · order_new · order_paid · order_delivered · order_cancelled ·
+quest_progress · quest_completed · quest_claimed · level_up ·
+notify_owner · approval_created · approval_resolved · sse
 ```
 
-## قراردادهای مهم
-- **هر پیام کاربر**: `get_or_create_user` → last_seen (سبک، ۱۵دقیقه‌ای)
-- **ارسال متن**: فقط `send_safe`/`edit_safe` (فالبک دولایه parse_mode)
-- **callbackها**: همیشه try/except پارس + `callback.answer` بازخورد
-- **پول**: فقط `update_credits` (تراکنش + ثبت ledger) — هرگز UPDATE مستقیم
-- **مایگریشن**: فقط `ALTER TABLE ... ADD COLUMN` با try در init_db — idempotent
-- **ماموریت‌ها**: خودمحاسبه از تیبل‌های واقعی (بدون هوک) → بدون ریسک ناسازگاری
+Subscribers: **bot** (sends DMs), **web** (SSE fan-out to dashboard), **cron**,
+**mcp/approval-hook** (executes side-effects when an approval is resolved).
+
+## HITL flow (money & irreversible actions)
+
+```
+tool call (withdraw/refund/broadcast/spend over quota)
+  → L11 HITL Gate → Approval created (risk, payload, TTL)
+  → owner notified (bot) + dashboard queue
+  → approve/reject within TTL
+  → approval_resolved event → mcp/approval-hook executes
+     (re-validates everything; fail-closed on any doubt)
+  → TTL expiry → auto-reject (sweeper in cron)
+```
+
+## AI strategy
+
+`src/ai/provider.ts` talks to any OpenAI-compatible API. When the AI is unreachable,
+every agent has a deterministic fallback (keyword routing, catalog lookups, KB search),
+so the product never hard-fails. All outputs pass through L13 redaction.
+
+## Money rules
+
+Integers only. Credits and Stars are separate ledgers. Commission is computed once at
+order creation. Stock is reserved at order time and released on cancel/refund.
+Double-claim protection via atomic conditional updates + `Nonce` table.

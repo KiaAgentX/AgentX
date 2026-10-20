@@ -1,0 +1,305 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  KIA DropAgentX — Database Schema (Prisma / SQLite)
+//  All money values are INTEGERS: credits (internal) and stars (Telegram Stars).
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  telegramId   String   @unique
+  username     String?
+  firstName    String?
+  language     String   @default("en")
+  role         String   @default("user") // user | vip | admin | owner
+  status       String   @default("active") // active | blocked
+  xp           Int      @default(0)
+  level        Int      @default(1)
+  streak       Int      @default(0)
+  lastSeenAt   DateTime?
+  referralCode String   @unique
+  referredById String?
+  referrer     User?    @relation("Referrals", fields: [referredById], references: [id])
+  referrals    User[]   @relation("Referrals")
+  wallet       Wallet?
+  orders       Order[]  @relation("BuyerOrders")
+  products     Product[]
+  reviews      Review[]
+  quests       UserQuest[]
+  bookings     Booking[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([role])
+  @@index([xp])
+}
+
+model Wallet {
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id])
+  credits      Int           @default(0)
+  stars        Int           @default(0)
+  frozen       Int           @default(0)
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  walletId  String
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+  type      String // topup_stars | topup_manual | purchase | sale | referral_bonus | quest_reward | transfer_in | transfer_out | refund | commission | withdraw
+  amount    Int // positive = credit to balance, negative = debit
+  currency  String   @default("credits") // credits | stars
+  status    String   @default("completed") // pending | completed | failed | frozen
+  reference String?
+  meta      String?
+  createdAt DateTime @default(now())
+
+  @@index([walletId])
+  @@index([type, createdAt])
+}
+
+model Product {
+  id              String   @id @default(cuid())
+  sellerId        String
+  seller          User     @relation(fields: [sellerId], references: [id])
+  title           String
+  description     String   @default("")
+  category        String   @default("general")
+  priceStars      Int
+  priceCredits    Int
+  stock           Int      @default(-1) // -1 = unlimited
+  status          String   @default("active") // draft | active | archived | flagged
+  featured        Boolean  @default(false)
+  delivery        String   @default("auto") // auto | manual
+  deliveryPayload String? // text / link / file id delivered to buyer
+  aiGenerated     Boolean  @default(false)
+  salesCount      Int      @default(0)
+  ratingAvg       Float    @default(0)
+  ratingCount     Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  orders  Order[]
+  reviews Review[]
+
+  @@index([status, category])
+  @@index([sellerId])
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  buyerId         String
+  buyer           User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  quantity        Int      @default(1)
+  totalStars      Int
+  totalCredits    Int
+  currency        String // stars | credits
+  status          String   @default("pending") // pending | paid | delivered | refunded | cancelled
+  paymentRef      String?
+  deliveryPayload String?
+  couponCode      String?
+  discount        Int      @default(0)
+  commission      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([buyerId])
+  @@index([status, createdAt])
+}
+
+model Coupon {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  percentOff  Int
+  maxUses     Int       @default(-1) // -1 = unlimited
+  usedCount   Int       @default(0)
+  activeFrom  DateTime?
+  activeUntil DateTime?
+  createdBy   String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int // 1..5
+  comment   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@unique([productId, userId])
+}
+
+model Quest {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  title        String
+  description  String   @default("")
+  type         String   @default("daily") // daily | weekly | onetime
+  xpReward     Int      @default(10)
+  creditReward Int      @default(0)
+  target       Int      @default(1)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  users        UserQuest[]
+}
+
+model UserQuest {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  questId       String
+  quest         Quest     @relation(fields: [questId], references: [id])
+  progress      Int       @default(0)
+  completedAt   DateTime?
+  rewardClaimed Boolean   @default(false)
+  periodKey     String // e.g. "2026-02-01" for dailies, "2026-W06" for weeklies, "forever" for onetime
+
+  @@unique([userId, questId, periodKey])
+  @@index([userId, periodKey])
+}
+
+model Referral {
+  id            String   @id @default(cuid())
+  referrerId    String
+  refereeId     String   @unique
+  rewardCredits Int      @default(0)
+  status        String   @default("credited") // credited | pending
+  createdAt     DateTime @default(now())
+
+  @@index([referrerId])
+}
+
+model Approval {
+  id             String    @id @default(cuid())
+  type           String // broadcast | withdraw | send_message | product_publish | tool_call | refund | owner_action
+  status         String    @default("pending") // pending | approved | rejected | expired
+  requestedById  String?
+  payload        String // JSON
+  summary        String
+  riskLevel      String    @default("medium") // low | medium | high | critical
+  toolName       String?
+  decidedById    String?
+  decidedAt      DateTime?
+  expiresAt      DateTime
+  resultNote     String?
+  createdAt      DateTime  @default(now())
+
+  @@index([status, expiresAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String // userId | telegramId | "system" | "a2a" | "web"
+  action    String
+  target    String?
+  status    String   @default("ok") // ok | denied | error
+  ip        String?
+  meta      String?
+  createdAt DateTime @default(now())
+
+  @@index([actor, createdAt])
+  @@index([action, createdAt])
+}
+
+model KnowledgeItem {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  tags      String   @default("") // comma separated
+  source    String   @default("manual") // manual | ai | import | radar
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  service    String
+  slotAt     DateTime
+  status     String    @default("confirmed") // confirmed | cancelled | completed
+  notes      String    @default("")
+  remindedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([slotAt, status])
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model Nonce {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+model RadarFinding {
+  id        String   @id @default(cuid())
+  query     String
+  title     String
+  url       String
+  snippet   String   @default("")
+  score     Float    @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AiUsage {
+  id              String   @id @default(cuid())
+  userId          String?
+  agent           String
+  model           String
+  promptChars     Int      @default(0)
+  completionChars Int      @default(0)
+  latencyMs       Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@index([agent, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Lead CRM — imported/collected prospects moved through new → warm → won.
+//  `contact` is the normalized dedupe key (email / phone / @username).
+// ─────────────────────────────────────────────────────────────────────────────
+model Lead {
+  id            String   @id @default(cuid())
+  contact       String   @unique
+  name          String?
+  company       String?
+  stage         String   @default("new") // new | warm | won | lost
+  score         Int      @default(0) // 0..100 qualification score
+  source        String   @default("manual") // manual | import | bot | radar
+  tags          String   @default("") // comma separated
+  notes         String?
+  lastTouchedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([stage, lastTouchedAt])
+  @@index([source])
+}

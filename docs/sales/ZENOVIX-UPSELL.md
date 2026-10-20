@@ -1,41 +1,54 @@
-# 🔮 آپ‌سِل Zenovix — «پذیرش هوشمند» £29/ماه (مسیر بعد از فروش £150)
+# 💰 ZENOVIX Upsell — £150 setup → £29/month retainer
 
-> **جایگاه در قیف:** Zenovix یک محصول جدا (FastAPI + Postgres + Redis + تلگرام)
-> است که **بعد از** بسته‌شدن معاملهٔ £150 وارد می‌شود. این سند «کیت فروش» است،
-> نه ماژولی از همین ریپو — برای اجرای محصول به ریپوی Zenovix مراجعه کن.
+The setup fee pays you once. The retainer pays you forever. This playbook turns
+every delivered bot into a monthly income line — using the product's own
+governance story as the anchor.
 
-## 🎯 چه می‌فروشیم؟
+## Why clients stay
 
-| آیتم | جزئیات |
-|---|---|
-| محصول | «پذیرش هوشمند» — ایجنت ۲۴/۷ روی تلگرام/واتساپ رستوران |
-| قیمت | **£29/ماه** (سالانه £290 = ۲ ماه هدیه) |
-| چه می‌کند | جواب مشتری، درخواست رزرو، منو و ساعت‌ها، گزارش روزانه |
-| خط قرمز | هر پیام حساس (قیمت جدید، تخفیف، شکایت) → **دکمه تأیید یک‌تپی برای مالک** |
-| مارجین تو | زیرساخت ≈ $12–15/ماه → ~۵۰٪ |
+KIA DropAgentX has a **HITL approval queue**: the AI can do everything *except*
+touch money or broadcast without the owner's tap. That means the owner's time
+stays the bottleneck — and your £29/month is "the person who watches the queue
+and keeps the AI sharp."
 
-## 🎬 دموی ۳۰ ثانانه‌ای برای مالک رستوران
+## The retainer promise (what £29/month buys)
 
-1. «این تلگرام رستوران شماست — الان یک مشتری پیام می‌دهد…»
-2. ربات همان‌جا از منوی واقعی جواب می‌دهد، رزرو می‌گیرد.
-3. پیام حساس بیا («۱۰٪ تخفیف می‌دهیم؟») → مالک روی موبایلش دکمه ✅ می‌زند → همان لحظه ارسال.
-4. «شب ساعت ۳ بامداد هم همین‌طور جواب می‌دهد. £29 در ماه — کمتر از دو پیتزا.»
+1. **Weekly AI tune-up** — review rejected/timeouted conversations, add the
+   misses to the knowledge base (RAG gets smarter every week).
+2. **Queue duty** — approve/reject pending HITL items within 4 business hours.
+3. **Monthly report** — revenue, top products, leaderboard, 1 improvement ship.
+4. **Emergency kill-switch** — client pings you, you stop the AI in 10 seconds.
 
-## 💰 پکیج‌بندی در چانه
+## Upsell ladder (each step is one conversation)
 
-> «سایت £150 یک‌باره + پذیرش هوشمند £29/ماه. اگر هردو را با هم بگیری،
-> اولین ماه پذیرش رایگان.»
+| Step | Offer | Price | Trigger |
+|---|---|---|---|
+| 0 | Setup (install + brand + staff training) | £150 | closed deal |
+| 1 | Retainer (see above) | £29/mo | delivery day |
+| 2 | Extra agent (Content Studio runs their product listings weekly) | +£20/mo | after first month |
+| 3 | Lead CRM import day (their scraped list cleaned + imported + first outreach campaign) | £75 one-off | after first broadcast |
+| 4 | Second bot for their second brand (white-label again) | £150 + £29/mo | they mention a sister business |
 
-**ریاضی یک رستوران:** £150 + (£29×۱۲) = **£498/سال**
+## Scripts
 
-## ⏱ کِی پیشنهاد بده؟
+**Delivery day (step 0 → 1):**
+> "The bot is live. Two options: you watch the approval queue yourself — it's
+> one tap, here's how — or I keep an eye on it and tune the AI weekly for
+> £29/month. Most owners take option two by week two; you can start now and
+> cancel anytime."
 
-- لحظهٔ طلایی: «رستوران‌ت دم‌هایش را کی جواب می‌دهد؟» — بعد از تحویل سایت
-- اگر مشتری دو بار از «جواب دادن به پیام‌ها» شکایت کرد → همان‌جا آپ‌سِل
-- در CRM: معامله `won` شد → یادداشت «آپ‌سِل Zenovix» به notes اضافه کن
+**Week 3 check-in (step 2):**
+> "Your top product's listing converts 12% better since the AI rewrote it.
+> Want Content Studio to do that for every product, every week?"
 
-## 📏 قوانین طلایی
+**Pipeline pitch (step 3):**
+> "You gave me 200 contacts from your old spreadsheet. I imported them — 34
+> were duplicates, the rest are in the pipeline. Want me to run the first
+> outreach campaign this week?"
 
-- بدون revenue share؛ مالکیت کد/داده/کلید = مال مشتری
-- قیمت/قرارداد/حذف داده: همیشه با رکورد مدیر (HITL)
-- فروش/ارسال نهایی همیشه انسانی
+## Churn shield
+
+- Every monthly report **must** contain one number that went up because of you.
+- If a client goes quiet 10 days, send one line: "Queue is empty, AI is sharp,
+  revenue's up — anything you want changed?" Silence ≠ churn when the value is visible.
+- Never let the knowledge base go stale: stale answers are the #1 cancel reason.

@@ -1,0 +1,24 @@
+{
+  "name": "kiadropagentx-desktop",
+  "version": "1.0.0",
+  "description": "KIA DropAgentX — native desktop shell (Windows / macOS / Linux)",
+  "main": "main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --dir",
+    "dist:all": "electron-builder -mwl"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "app.kia.dropagentx",
+    "productName": "KIA DropAgentX",
+    "files": ["main.js", "preload.js", "icon.png"],
+    "mac": { "target": "dmg", "category": "public.app-category.business" },
+    "win": { "target": "nsis" },
+    "linux": { "target": "AppImage", "category": "Utility" }
+  }
+}

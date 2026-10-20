@@ -1,91 +1,36 @@
-# 🤝 Contributing to DropAgentX
+# Contributing to KIA DropAgentX
 
-DropAgentX از مشارکت شما استقبال می‌کند! 🎉
+Thanks for helping make KIA better! 🎉
 
-## 🚀 شروع سریع
+## Ground rules
+
+1. **TypeScript strict** — `npm run typecheck` must pass with zero errors.
+2. **Money is integer** — credits and Stars are integers, always. No floats.
+3. **Fail-closed** — new tools/actions must go through the security pipeline
+   (`src/core/security`) and, when risky, the HITL queue (`src/lib/hitl.service.ts`).
+4. **Services don't call Telegram** — emit bus events instead
+   (`src/lib/bus.ts`), let channels subscribe.
+5. **No secrets in code** — config comes from `src/config.ts` (zod env).
+6. **i18n** — user-facing strings go through `t(lang, key)`; add missing keys to
+   `locales/en.json` first.
+
+## Workflow
 
 ```bash
-# 1) Fork + Clone
-git clone https://github.com/<your-user>/DropAgentXmain.git
-cd DropAgentXmain
-
-# 2) محیط مجازی
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
-
-# 3) نصب dependencies
-pip install -r requirements-dev.txt
-
-# 4) فایل env
-cp .env.example .env
-# BOT_TOKEN و ADMIN_IDS رو پر کن
-
-# 5) تست‌ها
-pytest
+fork → branch (feat/my-feature) → commit → pull request
 ```
 
-## 📋 قوانین مشارکت
+- Keep PRs focused; one feature or fix per PR.
+- Describe **what** and **why**; screenshots for dashboard changes are appreciated.
+- CI runs `typecheck + build` on every push — keep it green.
 
-### 🔀 Branch Naming
-- `feature/<name>` — قابلیت جدید
-- `fix/<name>` — رفع باگ
-- `docs/<name>` — تغییرات مستندات
-- `refactor/<name>` — بازنویسی بدون تغییر عملکرد
+## Code style
 
-### ✅ قبل از Pull Request
-1. **تست‌ها پاس بشن:** `pytest -q`
-2. **Compile بدون خطا:** `python -m compileall -q .`
-3. **Dependency check:** `pip check`
-4. **کد تمیز:** `ruff check .` (اختیاری ولی توصیه‌شده)
-5. **هیچ secret در کد نباشه** — فقط `.env.example` آپدیت بشه
+- Named exports only, no default exports.
+- No `console.log` in runtime code — use `src/lib/logger.ts`.
+- Comments explain *why*, not *what*.
 
-### 📝 Commit Messages
-از فرمت زیر استفاده کنید:
-```
-<emoji> <type>: <description>
+## Reporting bugs / proposing features
 
-🐛 fix: رفع مشکل خرید محصول
-✨ feat: اضافه کردن فیلتر جستجو
-📝 docs: بروزرسانی README
-♻️ refactor: بازنویسی hermes_engine
-🧪 test: اضافه کردن تست‌های wallet
-🐳 docker: بهبود Dockerfile
-```
-
-### 🏗️ ساختار پروژه
-```
-bot.py              نقطه ورود اصلی بات
-config.py           تنظیمات (از .env)
-database.py         لایه دیتابیس (SQLite + aiosqlite)
-hermes_engine.py    موتور AI (CLI/HTTP/API)
-handlers/           هندلرهای بات تلگرام
-shared/             ماژول‌های مشترک (security, llm, context)
-gateway/            API Gateway
-web/                فرانت‌اند (vanilla JS)
-web-next/           فرانت‌اند (Next.js)
-deploy/             فایل‌های استقرار Docker
-tests/              تست‌ها (pytest)
-```
-
-## 🔒 امنیت
-
-- **هرگز** فایل `.env` یا کلید API را کامیت نکنید
-- تغییرات امنیتی را از طریق [Security Advisories](../../security/advisories) گزارش دهید
-- `shared/security/skills_guard.py` را برای هر skill جدید بررسی کنید
-
-## 🐛 گزارش باگ
-
-از [Issues](../../issues) با اطلاعات زیر استفاده کنید:
-- نسخه DropAgentX (مثلاً v3.0.0)
-- مراحل بازتولید
-- خروجی خطا (بدون اطلاعات حساس!)
-- محیط (Python version, OS)
-
-## 📜 لایسنس
-
-با مشارکت در این پروژه، موافقت می‌کنید که کد شما تحت [لایسنس MIT](LICENSE) منتشر شود.
-
----
-
-ممنون از مشارکت شما! 💙
+Open a GitHub Issue with reproduction steps (bugs) or a problem statement + proposal
+(features). Security issues: see [docs/SECURITY.md](docs/SECURITY.md) — never in public.
