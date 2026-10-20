@@ -37,7 +37,9 @@ jobs:
       - name: Secret scan (no real credentials in the repo)
         run: |
           PATTERNS='(sk-[A-Za-z0-9_-]{30,})|(gh[pousr]_[A-Za-z0-9]{30,})|([0-9]{8,10}:[A-Za-z0-9_-]{35})|(AKIA[0-9A-Z]{16})|(-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----)'
-          HITS=$(grep -rEl "$PATTERNS" --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=db . || true)
+          # tests/ is excluded on purpose: the redaction-layer fixtures
+          # (tests/security.test.ts) MUST contain fake secret-shaped strings.
+          HITS=$(grep -rEl "$PATTERNS" --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=db --exclude-dir=tests . || true)
           if [ -n "$HITS" ]; then
             echo "::error::Potential secrets committed:"
             echo "$HITS"
