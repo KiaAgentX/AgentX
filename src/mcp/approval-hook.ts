@@ -18,8 +18,10 @@ import * as orderService from '../services/order.service';
  *   broadcast → fan-out NOTIFY_USER bus events in chunks (bot-independent)
  * Anything else is reported to the owner instead of being guessed at.
  *
- * Idempotency: the executors re-claim status internally (atomic updateMany
- * guards), so a replayed APPROVAL_RESOLVED event cannot double-execute.
+ * Idempotency (two layers): the approval claim in hitl.service.resolveApproval
+ * is atomic (updateMany where status='pending'), AND every executor claims a
+ * durable execution nonce — a replayed APPROVAL_RESOLVED event can never
+ * double-execute a withdrawal or double-send a broadcast.
  */
 
 const BROADCAST_CHUNK = 30;
@@ -37,6 +39,16 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function executeBroadcast(approvalId: string): Promise<void> {
+  // Execution nonce — defense in depth against double-tap / replayed events.
+  try {
+    await db.nonce.create({
+      data: { key: `broadcast_exec:${approvalId}`, expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000) },
+    });
+  } catch {
+    logger.warn({ approvalId }, '📣 broadcast execution replay blocked by nonce');
+    return;
+  }
+
   const approval = await getApproval(approvalId);
   const payload = approval ? getApprovalPayload<BroadcastPayload>(approval) : {};
   const text = typeof payload.text === 'string' ? payload.text : '';
@@ -48,19 +60,22 @@ async function executeBroadcast(approvalId: string): Promise<void> {
   // telegramId is a required (unique) column — every user row is reachable.
   const users = await db.user.findMany({ select: { telegramId: true } });
 
-  let delivered = 0;
+  let queued = 0;
   for (let i = 0; i < users.length; i += BROADCAST_CHUNK) {
     const chunk = users.slice(i, i + BROADCAST_CHUNK);
     for (const user of chunk) {
       if (!user.telegramId) continue;
       emitBus(BUS_EVENTS.NOTIFY_USER, { telegramId: user.telegramId, text });
-      delivered += 1;
+      queued += 1;
     }
     if (i + BROADCAST_CHUNK < users.length) await sleep(BROADCAST_CHUNK_DELAY_MS);
   }
 
-  logger.info({ approvalId, delivered }, '📣 broadcast delivered');
-  notifyOwner(`📣 Broadcast delivered to ${delivered} users.`);
+  // Honest reporting: this counts QUEUED deliveries (the bot layer retries
+  // each send up to 3×; users who blocked the bot are reported as failures
+  // there, not silently counted as reached).
+  logger.info({ approvalId, queued }, '📣 broadcast queued');
+  notifyOwner(`📣 Broadcast queued for delivery to ${queued} users (failed sends are retried up to 3× by the delivery layer).`);
 }
 
 async function handleResolved(p: ApprovalEventPayload): Promise<void> {

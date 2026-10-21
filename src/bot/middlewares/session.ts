@@ -19,9 +19,17 @@ const sessions = new Map<string, UserSession>();
 export function getSession(telegramId: string): UserSession {
   const existing = sessions.get(telegramId);
   if (existing) return existing;
-  // Crude leak guard: single-process bot, sessions are tiny; wiping the oldest
-  // map wholesale beats an unbounded Map if the bot ever grows huge.
-  if (sessions.size >= MAX_SESSIONS) sessions.clear();
+  // Leak guard with LRU-ish fairness: evict the oldest ~10% instead of
+  // nuking every session (mid-wizard users keep their state).
+  if (sessions.size >= MAX_SESSIONS) {
+    const evict = Math.ceil(MAX_SESSIONS * 0.1);
+    let n = 0;
+    for (const key of sessions.keys()) {
+      sessions.delete(key);
+      n += 1;
+      if (n >= evict) break;
+    }
+  }
   const fresh: UserSession = {};
   sessions.set(telegramId, fresh);
   return fresh;

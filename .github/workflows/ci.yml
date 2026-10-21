@@ -20,7 +20,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci || npm install
+        run: npm ci
 
       - name: Prisma generate
         run: npx prisma generate
@@ -49,12 +49,22 @@ jobs:
       - name: Smoke — boot web-only mode
         run: |
           # SQLite path is env-driven (prisma/schema.prisma) — set it for CI.
-          export DATABASE_URL=file:../db/kia.db
-          NODE_ENV=production PORT=3999 MCP_TOKEN_SECRET=ci-secret OWNER_IDS=1 \
-          npx prisma db push --skip-generate
-          NODE_ENV=production PORT=3999 MCP_TOKEN_SECRET=ci-secret OWNER_IDS=1 \
-          node dist/index.js &
+          export DATABASE_URL=file:../db/custom.db
+          export CI_ENV="NODE_ENV=production PORT=3999 MCP_TOKEN_SECRET=ci-secret-0123456789abcdef DASHBOARD_KEY=ci-dashboard-key OWNER_IDS=1"
+          env $CI_ENV npx prisma db push --skip-generate
+          env $CI_ENV node dist/index.js &
           sleep 6
           curl -fsS http://127.0.0.1:3999/healthz
-          curl -fsS http://127.0.0.1:3999/api/v1/overview > /dev/null
+          # owner endpoints now require the key (fail-closed)
+          curl -fsS -H "X-KIA-Key: ci-dashboard-key" http://127.0.0.1:3999/api/v1/overview > /dev/null
+          # keyless access to owner data must be REJECTED
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3999/api/v1/overview)" = "401"
           curl -fsS http://127.0.0.1:3999/api/v1/brand > /dev/null
+          # public product list must NOT leak delivery payloads
+          ! curl -fsS http://127.0.0.1:3999/api/v1/products | grep -q deliveryPayload
+
+      - name: Smoke — backup tool (VACUUM INTO)
+        run: |
+          export DATABASE_URL=file:../db/custom.db
+          npx tsx scripts/backup.ts --out /tmp/xdrop-backups
+          test -n "$(ls /tmp/xdrop-backups/kia-*.db 2>/dev/null)" && echo "backup OK"

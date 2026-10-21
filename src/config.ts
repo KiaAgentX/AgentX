@@ -8,7 +8,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
-  DATABASE_URL: z.string().default('file:../db/kia.db'),
+  DATABASE_URL: z.string().default('file:../db/custom.db'),
 
   // Telegram
   BOT_TOKEN: z.string().optional(),
@@ -63,6 +63,22 @@ if (!parsed.success) {
 }
 
 const env = parsed.data;
+
+// Fail-fast in production on known-insecure defaults — the same style already
+// used for an invalid BOT_TOKEN. A deployment that forgot its secrets must not
+// boot with a publicly-known dashboard key and forgeable tool tokens.
+if (env.NODE_ENV === 'production') {
+  const insecureSecret =
+    !env.MCP_TOKEN_SECRET || env.MCP_TOKEN_SECRET.trim() === '' || env.MCP_TOKEN_SECRET === 'kia-dev-secret-change-me';
+  if (insecureSecret) {
+    throw new Error(
+      'MCP_TOKEN_SECRET is missing or set to the insecure default — refusing to boot in production. Generate one: openssl rand -hex 32'
+    );
+  }
+  if (!env.DASHBOARD_KEY || env.DASHBOARD_KEY.trim() === '') {
+    throw new Error('DASHBOARD_KEY is required in production (header X-KIA-Key). Generate one: openssl rand -hex 32');
+  }
+}
 
 function parseIds(raw: string): number[] {
   return raw

@@ -1,4 +1,4 @@
-# ── KIA DropAgentX — production image ────────────────────────────────────────
+# ── XDrop (KIA DropAgentX) — production image ────────────────────────────────
 FROM node:20-slim
 
 # OpenSSL is required by Prisma
@@ -6,18 +6,23 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && r
 
 WORKDIR /app
 
-# Install dependencies first (better layer caching)
-COPY package.json ./
-RUN npm install
+# Install dependencies FIRST (lockfile-pinned, reproducible, cache-friendly)
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copy source and build
-COPY . .
+# Copy source (secrets/db/screenshots excluded via .dockerignore) and build
+COPY --chown=node:node . .
 RUN npx prisma generate && npm run build
 
-# Default SQLite location (mount a Volume at /app/db on Railway)
+# Default SQLite location — relative URLs resolve against prisma/ (see config).
+# Mount a Volume at /app/db (Railway/Fly/compose) so data survives redeploys.
 ENV NODE_ENV=production \
     PORT=3000 \
-    DATABASE_URL=file:../db/kia.db
+    DATABASE_URL=file:../db/custom.db
+
+# Writable DB dir for the non-root runtime user
+RUN mkdir -p /app/db && chown -R node:node /app/db
+USER node
 
 EXPOSE 3000
 

@@ -11,6 +11,10 @@
     en: {
       'a11y.skip': 'Skip to content',
       'brand.tagline': 'Command center',
+      'overview.hintStars': 'Telegram Stars', 'overview.hintCredits': 'credits',
+      'overview.hintAi': 'AI calls 24h: {n}', 'crm.funnelHint': 'new → warm → won',
+      'settings.langHint': 'FA / AR switch the whole UI to RTL.',
+      'settings.themeHint': 'Dark is the default. Light keeps the same accents.',
       'nav.overview': 'Overview', 'nav.market': 'Market', 'nav.orders': 'Orders',
       'nav.wallets': 'Wallets', 'nav.quests': 'Quests', 'nav.leaderboard': 'Leaderboard',
       'nav.bookings': 'Bookings', 'nav.owner': 'Owner', 'nav.settings': 'Settings',
@@ -95,6 +99,10 @@
     fa: {
       'a11y.skip': 'پرش به محتوا',
       'brand.tagline': 'مرکز فرماندهی',
+      'overview.hintStars': 'ستاره تلگرام', 'overview.hintCredits': 'کردیت',
+      'overview.hintAi': 'فراخوانی هوش مصنوعی ۲۴ ساعت: {n}', 'crm.funnelHint': 'جدید ← گرم ← موفق',
+      'settings.langHint': 'فارسی/عربی کل رابط کاربری را راست‌چین می‌کنند.',
+      'settings.themeHint': 'تم تاریک پیش‌فرض است؛ تم روشن همان رنگ‌ها را دارد.',
       'nav.overview': 'نمای کلی', 'nav.market': 'بازار', 'nav.orders': 'سفارش‌ها',
       'nav.wallets': 'کیف پول‌ها', 'nav.quests': 'ماموریت‌ها', 'nav.leaderboard': 'جدول امتیازها',
       'nav.bookings': 'رزروها', 'nav.owner': 'مالک', 'nav.settings': 'تنظیمات',
@@ -179,6 +187,10 @@
     ru: {
       'a11y.skip': 'Перейти к содержимому',
       'brand.tagline': 'Центр управления',
+      'overview.hintStars': 'Telegram Stars', 'overview.hintCredits': 'кредиты',
+      'overview.hintAi': 'AI-вызовы 24ч: {n}', 'crm.funnelHint': 'новый → тёплый → сделка',
+      'settings.langHint': 'FA / AR включают интерфейс RTL.',
+      'settings.themeHint': 'Тёмная тема по умолчанию. Светлая — те же акценты.',
       'nav.overview': 'Обзор', 'nav.market': 'Маркет', 'nav.orders': 'Заказы',
       'nav.wallets': 'Кошельки', 'nav.quests': 'Квесты', 'nav.leaderboard': 'Рейтинг',
       'nav.bookings': 'Брони', 'nav.owner': 'Владелец', 'nav.settings': 'Настройки',
@@ -263,6 +275,10 @@
     ar: {
       'a11y.skip': 'الانتقال إلى المحتوى',
       'brand.tagline': 'مركز القيادة',
+      'overview.hintStars': 'نجوم تيليجرام', 'overview.hintCredits': 'كريدت',
+      'overview.hintAi': 'نداءات الذكاء 24س: {n}', 'crm.funnelHint': 'جديد ← دافئ ← ناجح',
+      'settings.langHint': 'الفارسية/العربية تفعّل واجهة RTL.',
+      'settings.themeHint': 'الداكن هو الافتراضي؛ الفاتح بنفس الألوان.',
       'nav.overview': 'نظرة عامة', 'nav.market': 'السوق', 'nav.orders': 'الطلبات',
       'nav.wallets': 'المحافظ', 'nav.quests': 'المهام', 'nav.leaderboard': 'لوحة الصدارة',
       'nav.bookings': 'الحجوزات', 'nav.owner': 'المالك', 'nav.settings': 'الإعدادات',
@@ -624,7 +640,7 @@
     data.forEach((d, i) => {
       line += (i === 0 ? 'M' : 'L') + x(i).toFixed(1) + ',' + y(d.v).toFixed(1);
       dots += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(d.v).toFixed(1) + '" r="3.4" fill="' +
-        (metric === 'orders' ? '#8b5cf6' : '#10b981') + '" stroke="#09090b" stroke-width="1.5">' +
+        (metric === 'orders' ? '#8b5cf6' : '#34d399') + '" stroke="#070a12" stroke-width="1.5">' +
         '<title>' + esc(d.date + ' — ' + fmtInt(d.v)) + '</title></circle>';
     });
     const area = line + ' L' + x(data.length - 1).toFixed(1) + ',' + (padT + ih).toFixed(1) +
@@ -633,18 +649,24 @@
     for (let k = 0; k <= 4; k++) {
       const gy = (padT + ih - (ih * k / 4)).toFixed(1);
       const val = fmtCompact(max * k / 4);
-      grid += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#27272a" stroke-width="1" stroke-dasharray="3 5" opacity="0.55"/>' +
-        '<text x="' + (padL - 8) + '" y="' + (Number(gy) + 4) + '" text-anchor="end" font-size="10.5" fill="#71717a">' + esc(val) + '</text>';
+      grid += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#242b3d" stroke-width="1" stroke-dasharray="3 5" opacity="0.55"/>' +
+        '<text x="' + (padL - 8) + '" y="' + (Number(gy) + 4) + '" text-anchor="end" font-size="10.5" fill="#8b93a7">' + esc(val) + '</text>';
     }
     let xlabels = '';
     const step = data.length > 8 ? 2 : 1;
+    const locDigits = (v) => {
+      const s = String(v);
+      if (state.lang === 'fa') return s.replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
+      if (state.lang === 'ar') return s.replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+      return s;
+    };
     data.forEach((d, i) => {
       if (i % step !== 0 && i !== data.length - 1) return;
       const lbl = d.date.length >= 10 ? d.date.slice(8, 10) + '.' + d.date.slice(5, 7) : d.date;
-      xlabels += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="#71717a">' + esc(lbl) + '</text>';
+      xlabels += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="#8b93a7">' + esc(locDigits(lbl)) + '</text>';
     });
-    const stroke = metric === 'orders' ? '#8b5cf6' : '#10b981';
-    const stop1 = metric === 'orders' ? '139,92,246' : '16,185,129';
+    const stroke = metric === 'orders' ? '#8b5cf6' : '#34d399';
+    const stop1 = metric === 'orders' ? '139,92,246' : '52,211,153';
     return '<div class="chart-wrap"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
       esc(t(metric === 'orders' ? 'overview.chartOrders' : 'overview.chartRevenue')) + '">' +
       '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
@@ -670,9 +692,9 @@
       kpiCard('overview.users', fmtInt(d.users), { icon: '<path d="M17 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20"/><circle cx="10" cy="7.6" r="3.6"/><path d="M21 20v-1.6a3.4 3.4 0 0 0-2.6-3.3M15.6 4.2a3.6 3.6 0 0 1 0 6.8"/>' }) +
       kpiCard('overview.products', fmtInt(d.products), { icon: '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3.4 13.4A2 2 0 0 1 2.8 12V4.8A2 2 0 0 1 4.8 2.8H12a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8Z"/><circle cx="8" cy="8" r="1.4"/>' }) +
       kpiCard('overview.orders', fmtInt(d.orders), { icon: '<path d="M6 2.8h12a1 1 0 0 1 1 1V21l-3-2-2 2-2-2-2 2-2-2-3 2V3.8a1 1 0 0 1 1-1Z"/>' }) +
-      kpiCard('overview.revenueStars', fmtInt(d.revenueStars), { mod: 'kpi-amber', hint: 'Telegram Stars' }) +
-      kpiCard('overview.revenueCredits', fmtInt(d.revenueCredits), { mod: 'kpi-green', hint: '💎 credits' }) +
-      kpiCard('overview.pendingApprovals', fmtInt(d.pendingApprovals), { mod: d.pendingApprovals > 0 ? 'kpi-warn kpi-amber' : '', hint: d.aiCalls != null ? 'AI calls 24h: ' + fmtInt(d.aiCalls) : '' });
+      kpiCard('overview.revenueStars', fmtInt(d.revenueStars), { mod: 'kpi-amber', hint: t('overview.hintStars') }) +
+      kpiCard('overview.revenueCredits', fmtInt(d.revenueCredits), { mod: 'kpi-green', hint: t('overview.hintCredits') }) +
+      kpiCard('overview.pendingApprovals', fmtInt(d.pendingApprovals), { mod: d.pendingApprovals > 0 ? 'kpi-warn kpi-amber' : '', hint: d.aiCalls != null ? tf('overview.hintAi', { n: fmtInt(d.aiCalls) }) : '' });
     const metric = state.chartMetric;
     const chartCard = '<div class="card chart-card"><div class="chart-head"><h2>' + esc(t('overview.chart')) + '</h2>' +
       '<div class="chip-row" role="group" aria-label="Metric">' +
@@ -909,17 +931,19 @@
     const items = (res.data && res.data.items) || [];
     if (!items.length) { el.innerHTML = '<div class="card">' + emptyState('🎯', 'quests.empty') + '</div>'; return; }
     el.innerHTML = '<div class="quest-grid">' + items.map((qv) => {
-      const q = qv.quest || {};
+      const q = qv.quest || qv || {};
+      const credit = q.creditReward != null ? Number(q.creditReward) : (Number(q.reward) || 0);
       const target = Math.max(1, Number(q.target) || 1);
       const prog = Math.min(Number(qv.progress) || 0, target);
       const pct = Math.round((prog / target) * 100);
       const typeKey = { daily: 'quests.daily', weekly: 'quests.weekly', onetime: 'quests.onetime' }[q.type] || 'quests.onetime';
       const rewards =
-        (Number(q.creditReward) > 0 ? '<span class="price credits">💎 ' + fmtInt(q.creditReward) + '</span>' : '') +
+        (credit > 0 ? '<span class="price credits">💎 ' + fmtInt(credit) + '</span>' : '') +
         '<span class="price stars">⚡ ' + fmtInt(q.xpReward) + ' ' + esc(t('quests.xp')) + '</span>';
+      const completed = qv.completed === true || qv.completedAt != null;
       return '<article class="card quest-card hoverable">' +
         '<div class="quest-head"><div><div class="quest-title">' + esc(q.title || '—') + '</div></div>' +
-        '<div class="chip-row">' + (qv.completed ? '<span class="chip c-paid">✓ ' + esc(t('quests.completed')) + '</span>' : '') +
+        '<div class="chip-row">' + (completed ? '<span class="chip c-paid">✓ ' + esc(t('quests.completed')) + '</span>' : '') +
         '<span class="chip c-delivered">' + esc(t(typeKey)) + '</span></div></div>' +
         (q.description ? '<div class="quest-desc">' + esc(q.description) + '</div>' : '') +
         '<div class="quest-bar" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div>' +
@@ -1120,13 +1144,13 @@
       '<div class="settings-grid">' +
       /* language */
       '<div class="card settings-card"><h2>' + esc(t('settings.language')) + '</h2>' +
-      '<p class="hint">FA / AR switch the whole UI to RTL.</p>' +
+      '<p class="hint">' + esc(t('settings.langHint')) + '</p>' +
       '<div class="lang-grid">' + LANGS.map((L) =>
         '<button type="button" class="lang-btn" data-action="set-lang" data-lang="' + L[0] + '" aria-pressed="' + (state.lang === L[0]) + '">' +
         '<b>' + esc(L[1]) + '</b><span>' + esc(L[2]) + ' · ' + L[0].toUpperCase() + '</span></button>').join('') +
       '</div></div>' +
       /* theme */
-      '<div class="card settings-card"><h2>' + esc(t('settings.theme')) + '</h2><p class="hint">Dark is the default. Light keeps the same accents.</p>' +
+      '<div class="card settings-card"><h2>' + esc(t('settings.theme')) + '</h2><p class="hint">' + esc(t('settings.themeHint')) + '</p>' +
       '<div class="theme-row"><div class="label"><b>' + esc(t('settings.dark')) + '</b><span>' + esc(t('settings.light')) + ' ↔ ' + esc(t('settings.dark')) + '</span></div>' +
       '<span class="switch"><input type="checkbox" id="theme-switch" role="switch" aria-label="' + esc(t('settings.theme')) + '"' + (state.theme !== 'light' ? ' checked' : '') + '><i aria-hidden="true"></i></span>' +
       '</div></div>' +
@@ -1190,7 +1214,7 @@
     const s = statsRes.ok ? statsRes.data : null;
     const kpis = s ?
       kpiCard('crm.stats.total', fmtInt(s.total), { icon: '<path d="M16 21v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 19.4V21"/><circle cx="9.5" cy="8.5" r="3.6"/>' }) +
-      kpiCard('crm.stats.wonRate', fmtInt(s.wonRate) + '%', { mod: 'kpi-green', hint: 'new → warm → won' }) +
+      kpiCard('crm.stats.wonRate', fmtInt(s.wonRate) + '%', { mod: 'kpi-green', hint: t('crm.funnelHint') }) +
       kpiCard('crm.stats.fresh', fmtInt(s.fresh24h), { mod: 'kpi-amber' }) :
       '';
     const stage = state.crm.stage;
@@ -1314,9 +1338,18 @@
       debouncedRefresh();
     }
   }
-  function connectSSE() {
+  async function connectSSE() {
     if (!('EventSource' in window)) { startPolling(); return; }
-    try { es = new EventSource('/api/v1/stream'); }
+    // The stream is key-gated: exchange the dashboard key for a short-lived
+    // token first (EventSource cannot send headers). Guest mode → polling.
+    if (!state.key) { startPolling(); return; }
+    let token = null;
+    try {
+      const tok = await api('/stream-token', { method: 'POST', silent: true });
+      token = tok && tok.token ? encodeURIComponent(tok.token) : null;
+    } catch (e) { token = null; }
+    if (!token) { startPolling(); return; }
+    try { es = new EventSource('/api/v1/stream?token=' + token); }
     catch (e) { startPolling(); return; }
     es.onopen = () => { esFails = 0; setLive('live'); };
     es.onmessage = (ev) => {

@@ -7,9 +7,9 @@ Thanks for helping make KIA better! 🎉
 1. **TypeScript strict** — `npm run typecheck` must pass with zero errors.
 2. **Money is integer** — credits and Stars are integers, always. No floats.
 3. **Fail-closed** — new tools/actions must go through the security pipeline
-   (`src/core/security`) and, when risky, the HITL queue (`src/lib/hitl.service.ts`).
+   (`src/security/`) and, when risky, the HITL queue (`src/services/hitl.service.ts`).
 4. **Services don't call Telegram** — emit bus events instead
-   (`src/lib/bus.ts`), let channels subscribe.
+   (`src/core/bus.ts`), let channels subscribe.
 5. **No secrets in code** — config comes from `src/config.ts` (zod env).
 6. **i18n** — user-facing strings go through `t(lang, key)`; add missing keys to
    `locales/en.json` first.
@@ -27,7 +27,7 @@ fork → branch (feat/my-feature) → commit → pull request
 ## Code style
 
 - Named exports only, no default exports.
-- No `console.log` in runtime code — use `src/lib/logger.ts`.
+- No `console.log` in runtime code — use `src/core/logger.ts`.
 - Comments explain *why*, not *what*.
 
 ## Reporting bugs / proposing features

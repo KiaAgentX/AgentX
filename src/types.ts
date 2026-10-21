@@ -20,6 +20,12 @@ export interface CallContext {
   /** e.g. "receptionist" when an agent triggers the call. */
   agentName?: string;
   ip?: string | null;
+  /**
+   * Optional L12 tool token (HMAC, tool-scoped, 5-min TTL). When present it
+   * is VERIFIED against the tool being called — a mismatch fails closed.
+   * Internal agent calls omit it; external A2A callers must present it.
+   */
+  toolToken?: string | null;
 }
 
 export type ToolVisibility = 'public' | 'user' | 'owner' | 'hitl';

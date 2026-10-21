@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <!-- XDrop National Emblem — Great Seal
+       Outer ring: 12 ticks (digital calendar) + 6 gold dots (six pillars)
+       Inner: circuit traces + X+Drop monogram -->
+  <defs>
+    <radialGradient id="efield" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2A2160"/>
+      <stop offset="0.8" stop-color="#171140"/>
+      <stop offset="1" stop-color="#0F0B28"/>
+    </radialGradient>
+    <linearGradient id="eaurora" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#8B7CE8"/>
+    </linearGradient>
+    <linearGradient id="edrop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#7059DC"/>
+    </linearGradient>
+    <filter id="esoft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+
+  <rect width="1000" height="1000" fill="url(#efield)"/>
+
+  <!-- Outer structure -->
+  <circle cx="500" cy="500" r="472" fill="none" stroke="#CFC9E8" stroke-width="3" opacity="0.55"/>
+  <circle cx="500" cy="500" r="472" fill="none" stroke="#7059DC" stroke-width="1" opacity="0.5"/>
+  <circle cx="500" cy="500" r="402" fill="none" stroke="#CFC9E8" stroke-width="1.5" opacity="0.4"/>
+  <circle cx="500" cy="500" r="345" fill="none" stroke="#8B7CE8" stroke-width="1.5" opacity="0.5" stroke-dasharray="3 9"/>
+
+  <!-- 12 calendar ticks -->
+  <g stroke="#CFC9E8" stroke-width="7" stroke-linecap="round" opacity="0.75">
+    <line x1="915.0" y1="500.0" x2="950.0" y2="500.0"/>
+    <line x1="859.4" y1="707.5" x2="889.7" y2="725.0"/>
+    <line x1="707.5" y1="859.4" x2="725.0" y2="889.7"/>
+    <line x1="500.0" y1="915.0" x2="500.0" y2="950.0"/>
+    <line x1="292.5" y1="859.4" x2="275.0" y2="889.7"/>
+    <line x1="140.6" y1="707.5" x2="110.3" y2="725.0"/>
+    <line x1="85.0"  y1="500.0" x2="50.0"  y2="500.0"/>
+    <line x1="140.6" y1="292.5" x2="110.3" y2="275.0"/>
+    <line x1="292.5" y1="140.6" x2="275.0" y2="110.3"/>
+    <line x1="500.0" y1="85.0"  x2="500.0" y2="50.0"/>
+    <line x1="707.5" y1="140.6" x2="725.0" y2="110.3"/>
+    <line x1="859.4" y1="292.5" x2="889.7" y2="275.0"/>
+  </g>
+
+  <!-- 6 pillar dots (gold) -->
+  <g fill="#F5C542">
+    <circle cx="934.7" cy="616.6" r="13"/>
+    <circle cx="616.6" cy="934.7" r="13"/>
+    <circle cx="181.8" cy="818.2" r="13"/>
+    <circle cx="65.3"  cy="383.4" r="13"/>
+    <circle cx="383.4" cy="65.3"  r="13"/>
+    <circle cx="818.2" cy="181.8" r="13"/>
+  </g>
+
+  <!-- Circuit traces (open-network geometry) -->
+  <g stroke="#22D3EE" stroke-width="3" opacity="0.6">
+    <line x1="744.0" y1="744.0" x2="680.3" y2="680.3"/>
+    <line x1="256.0" y1="744.0" x2="319.7" y2="680.3"/>
+    <line x1="256.0" y1="256.0" x2="319.7" y2="319.7"/>
+    <line x1="744.0" y1="256.0" x2="680.3" y2="319.7"/>
+  </g>
+  <g fill="#22D3EE" opacity="0.85">
+    <circle cx="675.4" cy="675.4" r="7"/>
+    <circle cx="324.6" cy="675.4" r="7"/>
+    <circle cx="324.6" cy="324.6" r="7"/>
+    <circle cx="675.4" cy="324.6" r="7"/>
+  </g>
+
+  <!-- Central monogram -->
+  <g transform="translate(500 505)">
+    <g filter="url(#esoft)" opacity="0.65">
+      <rect x="-152" y="-28" width="304" height="56" rx="28" transform="rotate(45)" fill="#A78BFA"/>
+      <rect x="-152" y="-28" width="304" height="56" rx="28" transform="rotate(-45)" fill="#67E8F9"/>
+    </g>
+    <rect x="-150" y="-27" width="300" height="54" rx="27" transform="rotate(45)" fill="#FFFFFF"/>
+    <rect x="-150" y="-27" width="300" height="54" rx="27" transform="rotate(-45)" fill="#FFFFFF"/>
+    <g transform="scale(0.6)">
+      <path d="M0,-84 C34,-32 66,4 66,48 A66,66 0 1 1 -66,48 C-66,4 -34,-32 0,-84 Z" fill="#FFFFFF"/>
+      <path d="M0,-52 C22,-20 42,6 42,40 A42,42 0 1 1 -42,40 C-42,6 -22,-20 0,-52 Z" fill="url(#edrop)"/>
+      <circle cx="-16" cy="46" r="10" fill="#EAFBFF" opacity="0.85"/>
+    </g>
+  </g>
+
+  <!-- Founder star inside seal (upper) -->
+  <g transform="translate(500 118)">
+    <path d="M0,-22 C3,-7 7,-3 22,0 C7,3 3,7 0,22 C-3,7 -7,3 -22,0 C-7,-3 -3,-7 0,-22 Z" fill="#F5C542"/>
+  </g>
+</svg>

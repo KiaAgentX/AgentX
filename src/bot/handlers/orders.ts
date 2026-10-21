@@ -3,7 +3,8 @@ import { InlineKeyboard } from 'grammy';
 import { logger } from '../../core/logger';
 import { t } from '../../i18n';
 import { addReview } from '../../services/marketplace.service';
-import { getOrder, listMyOrders } from '../../services/order.service';
+import { isStaffUser } from '../../services/marketplace.service';
+import { cancelOrder, getOrder, listMyOrders, requestRefund } from '../../services/order.service';
 import type { BotContext } from '../context';
 import { editOrReply, orderStatusLabel, ordersKeyboard } from '../keyboards';
 
@@ -48,7 +49,17 @@ export async function showOrders(ctx: BotContext): Promise<void> {
 async function showOrderDetail(ctx: BotContext, orderId: string): Promise<void> {
   const lang = ctx.user.language;
   const order = await getOrder(orderId);
-  if (!order || order.buyerId !== ctx.user.id) {
+  if (!order) {
+    await ctx.reply(t(lang, 'error_generic'));
+    return;
+  }
+
+  // Access: the buyer ALWAYS sees their order; the seller and staff see it
+  // too (seller view is how /sales history rows resolve — no more dead-end).
+  const isBuyer = order.buyerId === ctx.user.id;
+  const isSeller = order.product.sellerId === ctx.user.id;
+  const isStaff = isSeller ? true : await isStaffUser(ctx.user.id);
+  if (!isBuyer && !isSeller && !isStaff) {
     await ctx.reply(t(lang, 'error_generic'));
     return;
   }
@@ -60,14 +71,31 @@ async function showOrderDetail(ctx: BotContext, orderId: string): Promise<void> 
     totalLabel(lang, order),
     `🕒 ${order.createdAt.toISOString().slice(0, 16).replace('T', ' ')}Z`,
   ];
+  if (!isBuyer) {
+    // Seller/staff view: who bought it (they deliver to this person).
+    const buyerName = order.buyer.firstName || order.buyer.username || order.buyer.telegramId;
+    lines.push(`👤 ${buyerName}`);
+  }
   if (order.deliveryPayload) lines.push(`📦 ${order.deliveryPayload.slice(0, 500)}`);
 
   const kb = new InlineKeyboard();
-  if (order.status === 'delivered') {
+  if (order.status === 'delivered' && isBuyer) {
     for (let n = 1; n <= 5; n++) kb.text(`${n}⭐`, `review:${order.id}:${n}`);
     kb.row();
   }
-  kb.text(t(lang, 'back'), 'menu:orders');
+
+  // Contextual actions:
+  const canDeliver = isSeller || isStaff;
+  if (order.status === 'paid' && canDeliver) {
+    kb.text(t(lang, 'deliver_btn'), `sdel:${order.id}`).row();
+  }
+  if (order.status === 'pending' && isBuyer) {
+    kb.text(t(lang, 'cancel_order_btn'), `ordc:${order.id}`).row();
+  }
+  if ((order.status === 'paid' || order.status === 'delivered') && isBuyer) {
+    kb.text(t(lang, 'refund_request_btn'), `ordr:${order.id}`).row();
+  }
+  kb.text(t(lang, 'back'), isBuyer ? 'menu:orders' : 'menu:root');
 
   await editOrReply(ctx, lines.join('\n'), kb);
 }
@@ -83,6 +111,28 @@ export function registerOrders(bot: Bot<BotContext>): void {
       await showOrderDetail(ctx, ctx.match[1]);
     } catch (err) {
       logger.warn({ err }, '⛔ order detail callback failed');
+      await ctx.reply(t(ctx.user.language, 'error_generic')).catch(() => undefined);
+    }
+  });
+
+  bot.callbackQuery(/^ordc:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery().catch(() => undefined);
+    try {
+      await cancelOrder(ctx.match[1], ctx.user.id);
+      await ctx.reply(t(ctx.user.language, 'order_cancelled_ok'));
+    } catch (err) {
+      logger.warn({ err, orderId: ctx.match[1] }, '⛔ order cancel failed');
+      await ctx.reply(t(ctx.user.language, 'error_generic')).catch(() => undefined);
+    }
+  });
+
+  bot.callbackQuery(/^ordr:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery().catch(() => undefined);
+    try {
+      await requestRefund(ctx.match[1], ctx.user.id, 'requested via bot');
+      await ctx.reply(t(ctx.user.language, 'refund_requested'));
+    } catch (err) {
+      logger.warn({ err, orderId: ctx.match[1] }, '⛔ refund request failed');
       await ctx.reply(t(ctx.user.language, 'error_generic')).catch(() => undefined);
     }
   });

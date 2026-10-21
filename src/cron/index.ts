@@ -4,8 +4,10 @@ import { logger } from '../core/logger';
 import { db } from '../core/db';
 import { BUS_EVENTS, emitBus } from '../core/bus';
 import { expireOverdue } from '../services/hitl.service';
+import { cancelStalePendingOrders } from '../services/order.service';
 import { getSetting } from '../services/settings.service';
 import { notifyOwner } from '../services/notification.service';
+import { t } from '../i18n';
 import * as bookingService from '../services/booking.service';
 import * as analyticsService from '../services/analytics.service';
 import { decodeEntities, htmlToText, safeFetchText } from '../mcp/execute';
@@ -17,9 +19,12 @@ import { decodeEntities, htmlToText, safeFetchText } from '../mcp/execute';
  *
  * Jobs:
  *  a) every 5 min  — HITL approval expiry sweeper (fail-closed)
- *  b) every 10 min — booking reminders inside the next 60h
- *  c) daily 09:00  — owner analytics report (feature flag ENABLE_AUTO_REPORTS)
- *  d) hourly       — price radar (feature flag ENABLE_RADAR, setting radar_urls)
+ *  b) every 10 min — pending-order sweeper (2h TTL, crash-recovery aware)
+ *  c) every 10 min — booking reminders for the NEXT HOUR (localized)
+ *  d) daily 09:00 (REPORT_TZ) — owner analytics report (ENABLE_AUTO_REPORTS)
+ *  e) hourly       — price radar (ENABLE_RADAR, setting radar_urls)
+ *
+ * Every job carries an in-flight guard: a long run can never overlap itself.
  */
 
 // node-cron@3 ships no TypeScript declarations — structural interface via require.
@@ -27,9 +32,12 @@ interface CronScheduledTask {
   start(): void;
   stop(): void;
 }
+interface CronScheduleOptions {
+  timezone?: string;
+}
 interface CronModule {
   validate(expression: string): boolean;
-  schedule(expression: string, func: () => void): CronScheduledTask;
+  schedule(expression: string, func: () => void, options?: CronScheduleOptions): CronScheduledTask;
 }
 const cron = require('node-cron') as CronModule;
 
@@ -45,15 +53,25 @@ async function runApprovalSweeper(): Promise<void> {
   }
 }
 
+/** Cancel pending orders whose Stars invoice was never paid (2h TTL). */
+async function runPendingOrderSweeper(): Promise<void> {
+  await cancelStalePendingOrders(2);
+}
+
 async function runBookingReminders(): Promise<void> {
-  const upcoming = await bookingService.listUpcoming(60);
+  // Reminder = next hour only. (The old 60h window fired up to 2.5 days
+  // early — a confirmation echo, not a reminder.)
+  const upcoming = await bookingService.listUpcoming(1);
   if (upcoming.length === 0) return;
   for (const b of upcoming) {
     const slotLocal = b.slotAt.toISOString().slice(0, 16).replace('T', ' ');
     if (b.user.telegramId) {
       emitBus(BUS_EVENTS.NOTIFY_USER, {
         telegramId: b.user.telegramId,
-        text: `⏰ Reminder: your "${b.service}" booking is scheduled for ${slotLocal} UTC.`,
+        text: t((b.user as { language?: string }).language ?? 'en', 'booking_reminder', {
+          service: b.service,
+          time: slotLocal,
+        }),
       });
     }
     await bookingService.markReminded(b.id);
@@ -128,31 +146,65 @@ interface CronJob {
   name: string;
   expr: string;
   run: () => Promise<void>;
+  /** Timezone override (used for the daily report via REPORT_TZ). */
+  timezone?: string;
 }
 
 const JOBS: CronJob[] = [
   { name: 'approval-expiry-sweeper', expr: '*/5 * * * *', run: runApprovalSweeper },
+  { name: 'pending-order-sweeper', expr: '*/10 * * * *', run: runPendingOrderSweeper },
   { name: 'booking-reminders', expr: '*/10 * * * *', run: runBookingReminders },
-  { name: 'daily-report', expr: '0 9 * * *', run: runDailyReport },
+  { name: 'daily-report', expr: '0 9 * * *', run: runDailyReport, timezone: config.features.reportTz },
   { name: 'radar-scan', expr: '0 * * * *', run: runRadar },
 ];
 
-export function startCron(bot: Bot | null): void {
+/** Starts all jobs with overlap protection. Returns a stop() for shutdown. */
+export function startCron(bot: Bot | null): () => void {
   // The bot is intentionally unused here: all delivery flows through the bus,
   // so cron behaves identically in bot and web-only modes.
   void bot;
+
+  const tasks: CronScheduledTask[] = [];
+  const running = new Set<string>();
 
   for (const job of JOBS) {
     if (!cron.validate(job.expr)) {
       logger.error({ job: job.name, expr: job.expr }, '⏰ invalid cron expression — job skipped');
       continue;
     }
-    const task = cron.schedule(job.expr, () => {
-      job.run().catch((err) => {
-        logger.error({ err, job: job.name }, '⏰ cron job failed');
-      });
-    });
+    const task = cron.schedule(
+      job.expr,
+      () => {
+        // Overlap guard: skip this tick if the previous run is still going.
+        if (running.has(job.name)) {
+          logger.warn({ job: job.name }, '⏰ previous cron run still in flight — skipping tick');
+          return;
+        }
+        running.add(job.name);
+        job
+          .run()
+          .catch((err) => {
+            logger.error({ err, job: job.name }, '⏰ cron job failed');
+          })
+          .finally(() => running.delete(job.name));
+      },
+      job.timezone ? { timezone: job.timezone } : undefined
+    );
     task.start();
-    logger.info({ job: job.name, expr: job.expr }, '⏰ cron job scheduled');
+    tasks.push(task);
+    logger.info(
+      { job: job.name, expr: job.expr, ...(job.timezone ? { tz: job.timezone } : {}) },
+      '⏰ cron job scheduled'
+    );
   }
+
+  return () => {
+    for (const task of tasks) {
+      try {
+        task.stop();
+      } catch {
+        // already stopped
+      }
+    }
+  };
 }

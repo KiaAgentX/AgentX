@@ -7,6 +7,7 @@ import { InsufficientFundsError, NotFoundError, ValidationError } from '../core/
 import { getCreditsPerStar } from './settings.service';
 import { createApproval } from './hitl.service';
 import { notifyUser, sse } from './notification.service';
+import { t } from '../i18n';
 import { Currency } from '../types';
 
 /**
@@ -190,9 +191,9 @@ export async function transferCredits(
 }
 
 /**
- * Telegram Stars top-up → credits. Idempotent by paymentRef: if a completed
- * topup_stars transaction with the same reference already exists it is
- * returned as-is (no double credit).
+ * Telegram Stars top-up → credits. Idempotent by paymentRef: a durable Nonce
+ * claim (`topup:<paymentRef>`) plus the existing-tx lookup make concurrent
+ * replays (Telegram redelivery, double polling) impossible to double-credit.
  */
 export async function topupWithStars(
   userId: string,
@@ -206,7 +207,7 @@ export async function topupWithStars(
     throw new ValidationError('paymentRef is required');
   }
 
-  // Idempotency guard (unique by reference).
+  // Idempotency guard — audit trail first.
   const existing = await db.transaction.findFirst({
     where: { type: 'topup_stars', reference: paymentRef, status: 'completed' },
     include: { wallet: { select: { userId: true } } },
@@ -218,6 +219,23 @@ export async function topupWithStars(
     logger.info({ paymentRef, userId }, '⭐ Stars top-up replay — returning existing transaction');
     const { wallet: _wallet, ...txOnly } = existing;
     return { transaction: txOnly, creditsAdded: txOnly.amount };
+  }
+
+  // Atomic one-time claim — unique violation means a concurrent replay.
+  try {
+    await db.nonce.create({
+      data: { key: `topup:${paymentRef}`, expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000) },
+    });
+  } catch {
+    const replayed = await db.transaction.findFirst({
+      where: { type: 'topup_stars', reference: paymentRef, status: 'completed' },
+    });
+    if (replayed) {
+      logger.info({ paymentRef, userId }, '⭐ Stars top-up replay (nonce) — returning existing transaction');
+      return { transaction: replayed, creditsAdded: replayed.amount };
+    }
+    // Claimed but not yet written (concurrent in-flight) — treat as replay.
+    throw new ValidationError('Payment is already being processed');
   }
 
   const creditsPerStar = await getCreditsPerStar();
@@ -240,9 +258,9 @@ export async function topupWithStars(
   });
 
   emitWalletTx(txRow);
-  const user = await db.user.findUnique({ where: { id: userId }, select: { telegramId: true } });
+  const user = await db.user.findUnique({ where: { id: userId }, select: { telegramId: true, language: true } });
   if (user) {
-    notifyUser(user.telegramId, `⭐ Top-up confirmed: ${starsPaid} stars → +${creditsAdded} credits`);
+    notifyUser(user.telegramId, t(user.language, 'notify_topup_confirmed', { stars: starsPaid, credits: creditsAdded }));
   }
   logger.info({ userId, starsPaid, creditsAdded }, '⭐ Stars top-up credited');
   return { transaction: txRow, creditsAdded };
@@ -282,11 +300,26 @@ export async function executeApprovedWithdrawal(approval: Approval): Promise<{ o
     return { ok: false, note: 'Invalid withdrawal payload — failed closed, no funds moved' };
   }
 
+  // Defense in depth: execution nonce — even a replayed APPROVAL_RESOLVED
+  // event can never debit twice (the approval claim in hitl.service is the
+  // first guard, this is the second).
+  try {
+    await db.nonce.create({
+      data: { key: `withdraw_exec:${approval.id}`, expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000) },
+    });
+  } catch {
+    logger.warn({ approvalId: approval.id }, '💸 withdrawal execution replay blocked by nonce');
+    return { ok: false, note: 'Withdrawal already executed for this approval' };
+  }
+
   try {
     const tx = await debitWallet(userId, amountCredits, 'credits', 'withdraw', approval.id, { approvalId: approval.id });
-    const user = await db.user.findUnique({ where: { id: userId }, select: { telegramId: true } });
+    const user = await db.user.findUnique({ where: { id: userId }, select: { telegramId: true, language: true } });
     if (user) {
-      notifyUser(user.telegramId, `💸 Withdrawal approved: -${amountCredits} credits (ref ${approval.id.slice(0, 8)})`);
+      notifyUser(
+        user.telegramId,
+        t(user.language, 'notify_withdraw_approved', { credits: amountCredits, ref: approval.id.slice(0, 8) })
+      );
     }
     logger.info({ approvalId: approval.id, userId, amountCredits, txId: tx.id }, '💸 Withdrawal executed');
     return { ok: true, note: `Withdrawn ${amountCredits} credits (tx ${tx.id})` };

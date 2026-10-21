@@ -3,8 +3,17 @@
 ## Model
 
 **Fail-closed by default.** If a control can't decide, the answer is *no*.
-All 15 layers live in `src/core/security/` and run in fixed order; the first `block`
+All 15 layers live in `src/security/layers.ts` and run in fixed order; the first `block`
 short-circuits the request and writes an `AuditLog` row.
+
+**Honesty note (enforced vs declarative):** most layers are *enforced* at a real
+boundary in this codebase (L01–L06, L08–L11, L14–L15). Three are *declarative*
+controls: L07 (schema checks happen per-tool in `mcp/execute.ts` and zod config
+validation, not through a generic Zod schema table), L12 (tool tokens are minted
+and verified at `executeTool` whenever a call carries one — internal agent calls
+omit the token by design; external/A2A callers MUST present one) and L13
+(redaction is applied by agents before output reaches users, not at a single
+choke point). We label them clearly instead of overclaiming.
 
 | Layer | Name | Blocks |
 |---|---|---|
@@ -40,6 +49,22 @@ directly. They create an `Approval` with risk level + payload + TTL
 - Telegram webhook calls must carry the shared secret header (L08) — otherwise 401.
 - Dashboard owner APIs require `X-KIA-Key` (`DASHBOARD_KEY`, falling back to
   `MCP_TOKEN_SECRET`).
+
+## Web API & dashboard security
+
+- `X-KIA-Key` comparisons are **timing-safe**; repeated failures per IP are rate-limited
+  (15/min → 429) and the whole API surface has a 240 req/min per-IP budget.
+- Owner endpoints (`/overview`, `/orders`, `/wallets`, `/settings`, …) are **key-gated**.
+  Only `/brand`, the product catalog (sanitized projection — never `deliveryPayload`)
+  and `/quests`+`/leaderboard` are public.
+- The SSE live stream (`/api/v1/stream`) is **key-gated via short-lived HMAC tokens**
+  (5-min TTL): the dashboard exchanges its key at `POST /api/v1/stream-token`, then
+  connects with `?token=…` (EventSource cannot send headers).
+- The PWA is served behind Helmet CSP (no external scripts), and the service worker
+  persists **no** authenticated API responses to disk (network-only for `/api/`).
+- Known single-tenant caveat: the dashboard key both requests and approves HITL
+  actions; bot-originated approvals are separated by design. For a multi-admin
+  deployment, scope per-operator keys before enabling broad staff access.
 
 ## Reporting a vulnerability
 

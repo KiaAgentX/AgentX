@@ -6,6 +6,7 @@ import { getSettingNumber } from './settings.service';
 import { creditWallet } from './wallet.service';
 import { progressQuest } from './quest.service';
 import { notifyUser } from './notification.service';
+import { t } from '../i18n';
 
 /**
  * Referral engine.
@@ -76,7 +77,16 @@ export async function applyReferral(
       logger.warn({ err, referrerId: referrer.id }, '🎯 referrer_1 quest hook failed (non-fatal)');
     }
 
-    notifyUser(referrer.telegramId, `🤝 New referral joined with your link! +${rewardCredits} credits`);
+    const referrerFull = await db.user.findUnique({
+      where: { id: referrer.id },
+      select: { telegramId: true, language: true },
+    });
+    if (referrerFull) {
+      notifyUser(
+        referrerFull.telegramId,
+        t(referrerFull.language, 'notify_referral_joined', { credits: rewardCredits })
+      );
+    }
     logger.info({ referrerId: referrer.id, newUserId, rewardCredits }, '🤝 referral applied');
     return { ok: true, referrerId: referrer.id };
   } catch (err) {
@@ -119,10 +129,10 @@ export async function rewardOnFirstPurchase(buyerId: string): Promise<void> {
 
     const referrer = await db.user.findUnique({
       where: { id: buyer.referredById },
-      select: { telegramId: true },
+      select: { telegramId: true, language: true },
     });
     if (referrer) {
-      notifyUser(referrer.telegramId, `💰 Your referral made their first purchase — bonus +${amount} credits!`);
+      notifyUser(referrer.telegramId, t(referrer.language, 'notify_referral_first_purchase', { credits: amount }));
     }
     logger.info({ referrerId: buyer.referredById, buyerId, amount }, '🤝 first-purchase referral bonus paid');
   } catch (err) {

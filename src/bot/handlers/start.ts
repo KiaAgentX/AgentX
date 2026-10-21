@@ -3,7 +3,7 @@ import { isStaffTelegramId } from '../../config';
 import { db } from '../../core/db';
 import { logger } from '../../core/logger';
 import { LOCALES, t } from '../../i18n';
-import { getSettingNumber } from '../../services/settings.service';
+import { getBrand, getSettingNumber } from '../../services/settings.service';
 import { creditWallet, getOrCreateWallet } from '../../services/wallet.service';
 import { applyReferral } from '../../services/referral.service';
 import { touchDailyLogin } from '../../services/quest.service';
@@ -38,6 +38,14 @@ async function grantWelcomeBonusOnce(userId: string): Promise<number> {
     select: { id: true },
   });
   if (existing) return 0;
+  // Durable one-time claim — concurrent /start replays can never double-grant.
+  try {
+    await db.nonce.create({
+      data: { key: `welcome:${userId}`, expiresAt: new Date(Date.now() + 90 * 24 * 3600 * 1000) },
+    });
+  } catch {
+    return 0;
+  }
   await creditWallet(userId, amount, 'credits', 'bonus', WELCOME_BONUS_REF, { reason: 'welcome' });
   return amount;
 }
@@ -77,7 +85,7 @@ export function registerStart(bot: Bot<BotContext>): void {
       logger.debug({ err, userId: user.id }, '🎯 touchDailyLogin failed (non-fatal)');
     }
 
-    await ctx.reply(t(lang, 'welcome', { name: user.name }), {
+    await ctx.reply(t(lang, 'welcome', { name: user.name, brand: (await getBrand()).name }), {
       reply_markup: mainMenuKeyboard(lang, isStaffTelegramId(user.telegramId)),
     });
 
@@ -87,6 +95,21 @@ export function registerStart(bot: Bot<BotContext>): void {
       if (credits > 0) await ctx.reply(t(lang, 'welcome_bonus', { credits }));
     } catch (err) {
       logger.warn({ err, userId: user.id }, '🎁 welcome bonus failed (non-fatal)');
+    }
+
+    // Seller redundancy net: surface paid-but-undelivered orders on every
+    // /start — a missed push can never leave a paid order invisible.
+    if (isStaffTelegramId(user.telegramId) || user.role === 'owner' || user.role === 'admin') {
+      try {
+        const awaiting = await db.order.count({
+          where: { status: 'paid', product: { sellerId: user.id } },
+        });
+        if (awaiting > 0) {
+          await ctx.reply(`⏳ ${t(lang, 'sales_awaiting', { count: awaiting })} → /sales`);
+        }
+      } catch (err) {
+        logger.debug({ err }, 'seller awaiting banner skipped (non-fatal)');
+      }
     }
   });
 

@@ -1,0 +1,63 @@
+# electron-builder — Windows NSIS installer configuration
+# Build:  npm run desktop:build   (from repo root)
+# Output: release/DropAgentX-Setup-<version>.exe
+
+appId: app.xdrop.dropagentx
+productName: DropAgentX
+copyright: Copyright © 2026 KiaAgentX
+
+directories:
+  output: release
+  buildResources: desktop
+
+# Application payload — dist build + web assets + i18n + desktop shell.
+# node_modules production deps are included automatically; the Prisma CLI
+# (dev-only at runtime) is excluded to keep the installer small.
+# NOTE: asar is disabled — the generated Prisma client (node_modules/.prisma,
+# a dot-directory the collector never picks up) is copied into the app dir by
+# scripts/eb-afterpack.cjs instead. Open-source app; no asar obfuscation needed.
+files:
+  - dist/**/*
+  - public/**/*
+  - locales/**/*
+  - desktop/main.js
+  - desktop/preload.js
+  - desktop/icon.png
+  - prisma/schema.prisma
+  - "!node_modules/prisma/**"
+  - "!node_modules/@prisma/engines/**"
+
+asar: false
+
+# Bundled recovered database snapshot — copied to %APPDATA%/DropAgentX/data
+# on first run by desktop/main.js.
+extraResources:
+  - from: db/custom.db
+    to: data/custom.db
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: public/icons/icon-512.png
+  # Icon/version embedding is done natively by scripts/eb-afterpack.cjs
+  # (pure-JS resedit) — no wine needed on the Linux build host.
+  signAndEditExecutable: false
+
+afterPack: ./scripts/eb-afterpack.cjs
+
+nsis:
+  oneClick: false
+  perMachine: false            # per-user install → no UAC admin prompt
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: DropAgentX
+  uninstallDisplayName: DropAgentX
+  artifactName: DropAgentX-Setup-${version}.${ext}
+
+compression: normal
+
+linux:
+  executableName: DropAgentX

@@ -11,6 +11,7 @@ import {
 } from '../../services/hitl.service';
 import { getSetting, setSetting } from '../../services/settings.service';
 import { todaySnapshot } from '../../services/analytics.service';
+import { showSales } from './sales';
 import { editOrReply, approvalKeyboard } from '../keyboards';
 import type { BotContext } from '../context';
 
@@ -42,10 +43,11 @@ function ownerKeyboard(lang: string): InlineKeyboard {
     .text(t(lang, 'approve'), 'owner:approvals')
     .text(t(lang, 'add_product'), 'owner:addproduct')
     .row()
-    .text('🚨 Panic', 'owner:kill')
+    .text(t(lang, 'sales_label'), 'owner:sales')
     .text(t(lang, 'stats_title'), 'owner:stats')
     .row()
-    .text('📣 Broadcast', 'owner:broadcast');
+    .text(t(lang, 'panic_label'), 'owner:kill')
+    .text(t(lang, 'broadcast_label'), 'owner:broadcast');
 }
 
 async function panelText(lang: string): Promise<string> {
@@ -160,7 +162,9 @@ export function registerOwner(bot: Bot<BotContext>): void {
       }
       await createApproval({
         type: 'broadcast',
-        summary: `📣 Broadcast: ${text.slice(0, 180)}`,
+        // Full text in the card (400-char summary limit) — the owner must be
+        // able to see exactly what they are approving.
+        summary: `📣 Broadcast: ${text.slice(0, 360)}${text.length > 360 ? '…' : ''}`,
         payload: { text, requestedBy: ctx.user.telegramId },
         requestedByTelegramId: ctx.user.telegramId,
         riskLevel: 'high',
@@ -217,6 +221,9 @@ export function registerOwner(bot: Bot<BotContext>): void {
         case 'addproduct':
           await startAddProduct(ctx);
           return;
+        case 'sales':
+          await showSales(ctx);
+          return;
         case 'stats':
           await ctx.reply(await panelText(ctx.user.language));
           return;
@@ -224,10 +231,19 @@ export function registerOwner(bot: Bot<BotContext>): void {
           await ctx.reply(t(ctx.user.language, 'broadcast_hint'));
           return;
         case 'kill': {
+          // Two-tap confirmation: this is the most dangerous control in the
+          // bot (one wrong tap takes the marketplace offline for everyone).
           const lang = ctx.user.language;
-          const next = (await getSetting('kill_switch')) === 'true' ? 'false' : 'true';
-          await setSetting('kill_switch', next);
-          await ctx.reply(t(lang, next === 'true' ? 'kill_switch_on' : 'kill_switch_off'));
+          const current = (await getSetting('kill_switch')) === 'true';
+          if (!current) {
+            const kb = new InlineKeyboard()
+              .text(t(lang, 'confirm_yes'), 'owner:kill:confirm')
+              .text(t(lang, 'confirm_no'), 'menu:owner');
+            await ctx.reply(t(lang, 'kill_confirm'), { reply_markup: kb });
+            return;
+          }
+          await setSetting('kill_switch', 'false');
+          await ctx.reply(t(lang, 'kill_switch_off'));
           return;
         }
         default:
@@ -235,6 +251,22 @@ export function registerOwner(bot: Bot<BotContext>): void {
       }
     } catch (err) {
       logger.warn({ err, ownerKey: key }, '⛔ owner callback failed');
+      await ctx.reply(t(ctx.user.language, 'error_generic')).catch(() => undefined);
+    }
+  });
+
+  // Explicit kill-switch confirmation tap.
+  bot.callbackQuery('owner:kill:confirm', async (ctx) => {
+    await ctx.answerCallbackQuery().catch(() => undefined);
+    if (!isStaffCtx(ctx)) {
+      await ctx.reply(t(ctx.user.language, 'owner_only'));
+      return;
+    }
+    try {
+      await setSetting('kill_switch', 'true');
+      await ctx.reply(t(ctx.user.language, 'kill_switch_on'));
+    } catch (err) {
+      logger.warn({ err }, '⛔ kill confirm failed');
       await ctx.reply(t(ctx.user.language, 'error_generic')).catch(() => undefined);
     }
   });

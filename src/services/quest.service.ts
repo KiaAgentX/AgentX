@@ -5,6 +5,7 @@ import { logger } from '../core/logger';
 import { NotFoundError } from '../core/errors';
 import { creditWallet } from './wallet.service';
 import { notifyUser, sse } from './notification.service';
+import { t } from '../i18n';
 
 /**
  * Quests & XP engine.
@@ -23,12 +24,12 @@ export interface QuestDefinition {
 }
 
 export const DEFAULT_QUESTS: QuestDefinition[] = [
-  { code: 'daily_login', title: 'Daily Login', description: 'Check in every day to keep your streak alive', type: 'daily', xpReward: 10, creditReward: 0, target: 1 },
-  { code: 'daily_purchase', title: 'Shopaholic', description: 'Complete 1 purchase today', type: 'daily', xpReward: 40, creditReward: 50, target: 1 },
-  { code: 'daily_review', title: 'Critic', description: 'Leave 1 product review today', type: 'daily', xpReward: 15, creditReward: 20, target: 1 },
-  { code: 'first_purchase', title: 'First Blood', description: 'Complete your very first purchase', type: 'onetime', xpReward: 100, creditReward: 200, target: 1 },
-  { code: 'referrer_1', title: 'Recruiter', description: 'Invite your first friend via your referral link', type: 'onetime', xpReward: 150, creditReward: 500, target: 1 },
-  { code: 'ai_explorer', title: 'AI Explorer', description: 'Try any AI agent once', type: 'onetime', xpReward: 30, creditReward: 30, target: 1 },
+  { code: 'daily_login', title: 'ورود روزانه', description: 'هر روز وارد شو تا زنجیره‌ات زنده بماند', type: 'daily', xpReward: 10, creditReward: 0, target: 1 },
+  { code: 'daily_purchase', title: 'خریدار حرفه‌ای', description: 'امروز ۱ خرید انجام بده', type: 'daily', xpReward: 40, creditReward: 50, target: 1 },
+  { code: 'daily_review', title: 'منتقد', description: 'امروز ۱ نقد برای محصولات بنویس', type: 'daily', xpReward: 15, creditReward: 20, target: 1 },
+  { code: 'first_purchase', title: 'اولین خرید', description: 'اولین خریدت را کامل کن', type: 'onetime', xpReward: 100, creditReward: 200, target: 1 },
+  { code: 'referrer_1', title: 'دعوت‌گر', description: '۱ دوست را با لینک معرفی دعوت کن', type: 'onetime', xpReward: 150, creditReward: 500, target: 1 },
+  { code: 'ai_explorer', title: 'کاوشگر هوش مصنوعی', description: 'یک بار یکی از ایجنت‌های هوش مصنوعی را امتحان کن', type: 'onetime', xpReward: 30, creditReward: 30, target: 1 },
 ];
 
 /** Level curve: level = 1 + floor(sqrt(max(xp,0)) / 10). */
@@ -81,6 +82,23 @@ export async function ensureDefaultQuests(): Promise<Quest[]> {
   }
   logger.debug({ count: out.length }, '🎯 default quests ensured');
   return out;
+}
+
+/**
+ * CREATE-ONLY boot seeding: adds default quests that are missing but never
+ * overwrites existing rows — the owner's customized titles/rewards survive
+ * every reboot and every GET /quests call (write-on-read removed).
+ */
+export async function seedMissingQuests(): Promise<number> {
+  let created = 0;
+  for (const def of DEFAULT_QUESTS) {
+    const exists = await db.quest.findUnique({ where: { code: def.code }, select: { id: true } });
+    if (exists) continue;
+    await db.quest.create({ data: { ...def, active: true } });
+    created += 1;
+  }
+  if (created > 0) logger.info({ created }, '🎯 missing default quests seeded (create-only)');
+  return created;
 }
 
 export interface QuestView {
@@ -149,10 +167,13 @@ export async function progressQuest(userId: string, code: string, delta = 1): Pr
         logger.error({ err, userId, code }, '🎯 quest XP grant failed');
       }
 
-      const user = await db.user.findUnique({ where: { id: userId }, select: { telegramId: true } });
+      const user = await db.user.findUnique({ where: { id: userId }, select: { telegramId: true, language: true } });
       if (user) {
-        const creditNote = quest.creditReward > 0 ? ` — ${quest.creditReward} credits ready to claim 🎁` : '';
-        notifyUser(user.telegramId, `🏆 Quest complete: ${quest.title} (+${quest.xpReward} XP${creditNote})`);
+        const creditNote = quest.creditReward > 0 ? ` — ${quest.creditReward}💎` : '';
+        notifyUser(
+          user.telegramId,
+          t(user.language, 'notify_quest_complete', { title: quest.title, xp: quest.xpReward, credits: creditNote })
+        );
       }
       sse('quest_completed', { userId, code, title: quest.title });
       logger.info({ userId, code }, '🎯 quest completed');
@@ -198,9 +219,9 @@ export async function claimReward(userId: string, questId: string): Promise<Clai
   emitBus(BUS_EVENTS.QUEST_DONE, { userId, questId, code: quest.code, credits, xp: quest.xpReward });
   sse('quest_claimed', { userId, code: quest.code, credits });
 
-  const user = await db.user.findUnique({ where: { id: userId }, select: { telegramId: true } });
+  const user = await db.user.findUnique({ where: { id: userId }, select: { telegramId: true, language: true } });
   if (user && credits > 0) {
-    notifyUser(user.telegramId, `🎁 Quest reward claimed: +${credits} credits (${quest.title})`);
+    notifyUser(user.telegramId, t(user.language, 'notify_quest_reward', { credits, title: quest.title }));
   }
   return { ok: true, xp: quest.xpReward, credits };
 }
@@ -220,7 +241,7 @@ export async function addXp(userId: string, amount: number): Promise<{ xp: numbe
   const level = levelForXp(updated.xp);
   if (level > updated.level) {
     await db.user.update({ where: { id: userId }, data: { level } });
-    notifyUser(updated.telegramId, `🌟 Level up! You reached level ${level}`);
+    notifyUser(updated.telegramId, t(updated.language, 'notify_level_up', { level }));
     sse('level_up', { userId, level, xp: updated.xp });
     logger.info({ userId, level, xp: updated.xp }, '🌟 level up');
     return { xp: updated.xp, level, levelUp: true };

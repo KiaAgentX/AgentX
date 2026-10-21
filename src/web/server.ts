@@ -1,5 +1,6 @@
 import http, { type Server } from 'http';
 import path from 'path';
+import { readFileSync } from 'fs';
 import type { Bot, WebhookReplyEnvelope } from 'grammy';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
@@ -11,16 +12,36 @@ import { BUS_EVENTS, onBus } from '../core/bus';
 import type { SsePayload } from '../core/bus';
 import { aiEnabled } from '../ai/provider';
 import { verifyTelegramSecret } from '../security';
+import { mintStreamToken, verifyStreamToken, STREAM_TOKEN_TTL_SEC } from '../security/stream-token';
+import { SlidingWindowRateLimiter } from '../security/rate-limiter';
 import { getBrand } from '../services/settings.service';
 import { createApiRouter } from './routes';
 
 /**
  * Web server: static dashboard, /healthz, Telegram webhook, SSE live stream
- * and the /api/v1 REST API (docs/API.md). Boots with bot = null in web-only
- * mode (no BOT_TOKEN) — the dashboard and API keep working.
+ * (key-gated via short-lived tokens) and the /api/v1 REST API (docs/API.md).
+ * Boots with bot = null in web-only mode (no BOT_TOKEN) — the dashboard and
+ * API keep working.
  */
 
 const HEARTBEAT_MS = 25_000;
+
+/** Read the real version from package.json (never hardcoded). */
+const APP_VERSION: string = (() => {
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(__dirname, '..', '..', 'package.json'), 'utf8')) as { version?: string };
+    return pkg.version ?? 'dev';
+  } catch {
+    return 'dev';
+  }
+})();
+
+/** Per-IP request budget for the whole API surface (read+write). */
+const webApiLimiter = new SlidingWindowRateLimiter(240, 60_000);
+
+function clientIp(req: Request): string {
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
 
 function sseHandler(req: Request, res: Response): void {
   res.status(200).set({
@@ -58,8 +79,28 @@ function sseHandler(req: Request, res: Response): void {
 export function createWebServer(bot: Bot | null): Express {
   const app = express();
 
+  // Railway/Fly proxies terminate TLS — trust exactly one hop so req.ip is
+  // the real client IP (rate limiting keys on it).
+  app.set('trust proxy', 1);
   app.disable('x-powered-by');
-  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"], // inline theme bootstrap + glass styles
+          imgSrc: ["'self'", 'data:'],
+          fontSrc: ["'self'"],
+          connectSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          frameAncestors: ["'self'"],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+    })
+  );
   app.use(
     cors({
       origin: config.web.corsOrigins.includes('*') ? true : [...config.web.corsOrigins],
@@ -87,7 +128,7 @@ export function createWebServer(bot: Bot | null): Express {
         db: dbOk,
         bot: bot !== null,
         ai: aiEnabled(),
-        version: '1.1.0',
+        version: APP_VERSION,
         brand: brand.name,
       });
     })();
@@ -112,10 +153,26 @@ export function createWebServer(bot: Bot | null): Express {
     });
   }
 
-  // ── SSE live stream (before the API router so it wins over /api/v1/*) ──────
-  app.get('/api/v1/stream', sseHandler);
+  // ── SSE live stream — key-gated via short-lived tokens (EventSource cannot
+  // send headers: the dashboard exchanges its key for a 5-min token first).
+  app.get('/api/v1/stream', (req: Request, res: Response) => {
+    if (!verifyStreamToken(req.query.token)) {
+      res.status(401).json({ ok: false, error: 'unauthorized', hint: `obtain a token via POST /api/v1/stream-token (valid ${STREAM_TOKEN_TTL_SEC}s)` });
+      return;
+    }
+    sseHandler(req, res);
+  });
 
-  // ── REST API (docs/API.md) ─────────────────────────────────────────────────
+  // ── REST API (docs/API.md) — per-IP request budget on the whole surface ────
+  app.use('/api/v1', (req: Request, res: Response, next: NextFunction) => {
+    const gate = webApiLimiter.hit(`api:${clientIp(req)}`);
+    if (!gate.allowed) {
+      res.set('Retry-After', String(gate.retryAfterSec));
+      res.status(429).json({ ok: false, error: 'rate_limited' });
+      return;
+    }
+    next();
+  });
   app.use('/api/v1', createApiRouter());
 
   // ── 404 + error middleware ────────────────────────────────────────────────

@@ -153,12 +153,23 @@ async function l01WhitelistGate(ctx: LayerContext): Promise<LayerResult> {
   return block(id, 'not_whitelisted');
 }
 
+/**
+ * L02 — kill switch. Reads the SAME canonical `kill_switch` setting the bot
+ * panic gate (/kill, owner panel) writes — the two gates can no longer drift.
+ * Fail-closed: if the setting cannot be read, block non-staff traffic.
+ */
 async function l02KillSwitch(ctx: LayerContext): Promise<LayerResult> {
   const id = 2;
-  const panic = await getSetting('panic_mode', 'false');
-  if (panic !== 'true') return allow(id, 'panic_off');
-  if (isStaff(ctx.role)) return allow(id, 'panic_staff_bypass');
-  return block(id, 'panic_mode_active');
+  let killed: string | null = null;
+  try {
+    killed = await getSetting('kill_switch', 'false');
+  } catch (err) {
+    logger.warn({ err }, '🚨 L02 kill_switch read failed — failing closed');
+    return isStaff(ctx.role) ? allow(id, 'kill_switch_read_failed_staff_bypass') : block(id, 'kill_switch_unreadable_fail_closed');
+  }
+  if (killed !== 'true') return allow(id, 'kill_switch_off');
+  if (isStaff(ctx.role)) return allow(id, 'kill_switch_staff_bypass');
+  return block(id, 'kill_switch_active');
 }
 
 function l03RateLimit(ctx: LayerContext): LayerResult {

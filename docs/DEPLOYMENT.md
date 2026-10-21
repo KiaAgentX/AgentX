@@ -32,7 +32,7 @@ git push -u origin main
 ### Step 3 — Persistent volume (SQLite)
 - Service → **Storage** → **Create Volume**
 - **Mount path: `/app/db`**
-- Your SQLite file lives at `/app/db/kia.db` and survives every deploy.
+- Your SQLite file lives at `/app/db/custom.db` and survives every deploy.
 
 ### Step 4 — Variables (service → Variables)
 ```env

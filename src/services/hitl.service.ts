@@ -83,26 +83,49 @@ export async function listPending(limit = 20): Promise<Approval[]> {
 /**
  * Approve/reject a pending approval. Only owner-level Telegram IDs may decide.
  * Returns the updated approval or null when it was already resolved/expired.
+ *
+ * Race-safe: the decision is an ATOMIC claim (updateMany where status='pending').
+ * Two rapid taps (or bot + dashboard deciding concurrently) can never both
+ * pass — exactly one caller gets the approval, the rest see null. This is what
+ * makes a double-tapped withdrawal/broadcast impossible.
  */
 export async function resolveApproval(
   id: string,
   decision: 'approved' | 'rejected',
   deciderTelegramId: string
 ): Promise<Approval | null> {
-  const approval = await db.approval.findUnique({ where: { id } });
-  if (!approval) throw new NotFoundError('Approval');
+  const now = new Date();
 
-  if (approval.status !== 'pending') return null;
-  if (approval.expiresAt.getTime() < Date.now()) {
-    const expired = await db.approval.update({ where: { id }, data: { status: 'expired' } });
-    emitBus(BUS_EVENTS.APPROVAL_RESOLVED, { approvalId: expired.id, type: expired.type, summary: expired.summary, riskLevel: expired.riskLevel, status: 'expired' });
+  // Atomic claim — only wins when the approval is still pending and unexpired.
+  const claimed = await db.approval.updateMany({
+    where: { id, status: 'pending', expiresAt: { gt: now } },
+    data: { status: decision, decidedById: deciderTelegramId, decidedAt: now },
+  });
+
+  if (claimed.count !== 1) {
+    // Either unknown, already resolved, or pending-but-expired.
+    const approval = await db.approval.findUnique({ where: { id } });
+    if (!approval) throw new NotFoundError('Approval');
+    if (approval.status === 'pending' && approval.expiresAt.getTime() <= Date.now()) {
+      const expired = await db.approval.updateMany({
+        where: { id, status: 'pending' },
+        data: { status: 'expired', resultNote: 'TTL reached — failed closed' },
+      });
+      if (expired.count === 1) {
+        emitBus(BUS_EVENTS.APPROVAL_RESOLVED, {
+          approvalId: approval.id,
+          type: approval.type,
+          summary: approval.summary,
+          riskLevel: approval.riskLevel,
+          status: 'expired',
+        });
+        emitBus(BUS_EVENTS.SSE, { type: 'approval_expired', payload: { id: approval.id, type: approval.type } });
+      }
+    }
     return null;
   }
 
-  const updated = await db.approval.update({
-    where: { id },
-    data: { status: decision, decidedById: deciderTelegramId, decidedAt: new Date() },
-  });
+  const updated = (await db.approval.findUnique({ where: { id } })) as Approval;
 
   logger.info({ approvalId: id, decision, decider: deciderTelegramId }, decision === 'approved' ? '🟢 HITL approved' : '🔴 HITL rejected');
   emitBus(BUS_EVENTS.APPROVAL_RESOLVED, {

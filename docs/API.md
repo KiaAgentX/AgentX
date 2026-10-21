@@ -15,8 +15,9 @@ Single source of truth for the **web server** (`src/web/server.ts`) and the
 |---|---|---|---|
 | GET | `/healthz` | – | `{status:"ok", uptime, db, bot, ai, version, brand}` |
 | GET | `/api/v1/brand` | – | White-label identity `{name, tagline, footer}` (env → live settings) |
-| GET | `/api/v1/overview` | – | KPI block + series + `brand` (see below) |
-| GET | `/api/v1/stream` | – | SSE: emits bus events (`wallet_tx`, `order_new`, `order_paid`, `order_delivered`, `quest_completed`, `level_up`, `approval_*`, `notify_owner`, `sse`) as `data: {"type":…, "payload":…}` |
+| GET | `/api/v1/overview` | 🔒 | KPI block + series + `brand` (see below) — owner data |
+| POST | `/api/v1/stream-token` | 🔒 | mints a 5-min HMAC token for the SSE stream |
+| GET | `/api/v1/stream?token=…` | token | SSE: emits bus events (`wallet_tx`, `order_new`, `order_paid`, `order_delivered`, `quest_completed`, `level_up`, `approval_*`, `notify_owner`, `sse`) as `data: {"type":…, "payload":…}` |
 
 ### GET /api/v1/overview → data
 ```jsonc

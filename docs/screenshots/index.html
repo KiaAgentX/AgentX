@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>XDrop Marketplace — گالری پیش‌نمایش پلتفرم</title>
+<style>
+  :root { --bg:#05070d; --card:rgba(255,255,255,.04); --border:rgba(255,255,255,.09); --text:#eef1f9; --muted:#9aa3ba; --accent:#8b5cf6; --accent2:#22d3ee; }
+  * { box-sizing:border-box; margin:0; }
+  body {
+    font-family:'Vazirmatn','Segoe UI',Tahoma,sans-serif;
+    background:
+      radial-gradient(1100px 520px at 12% -12%, rgba(124,58,237,.20), transparent 62%),
+      radial-gradient(900px 480px at 88% -8%, rgba(34,211,238,.12), transparent 58%),
+      var(--bg);
+    color:var(--text); min-height:100vh; padding:34px 22px 60px;
+  }
+  header { max-width:1240px; margin:0 auto 30px; text-align:center; }
+  header h1 {
+    font-size:30px; font-weight:800;
+    background:linear-gradient(135deg,#8b5cf6,#6366f1,#22d3ee);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  header p { color:var(--muted); margin-top:8px; font-size:14.5px; line-height:1.9; }
+  header .badge {
+    display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:7px 16px;
+    border:1px solid var(--border); border-radius:999px; background:var(--card); font-size:12.5px; color:var(--muted);
+  }
+  header .badge b { color:var(--text); }
+  section { max-width:1240px; margin:0 auto 40px; }
+  section > h2 {
+    display:flex; align-items:center; gap:10px;
+    font-size:19px; font-weight:800; margin-bottom:6px;
+  }
+  section > h2::before { content:''; width:10px; height:26px; border-radius:6px; background:linear-gradient(180deg,#8b5cf6,#22d3ee); }
+  section > p.sec-sub { color:var(--muted); font-size:13px; margin-bottom:16px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px; }
+  figure {
+    background:var(--card); border:1px solid var(--border); border-radius:18px; overflow:hidden;
+    transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  figure:hover { transform:translateY(-4px); border-color:rgba(139,92,246,.45); box-shadow:0 22px 44px -18px rgba(0,0,0,.8); }
+  figure img { width:100%; display:block; height:auto; border-bottom:1px solid var(--border); }
+  figure.wide { grid-column:1 / -1; }
+  figcaption { padding:12px 16px; font-size:13px; font-weight:600; line-height:1.8; }
+  figcaption small { display:block; color:var(--muted); font-weight:500; font-size:11.5px; margin-top:2px; }
+  .num {
+    display:inline-grid; place-items:center; min-width:22px; height:22px; padding:0 7px; margin-inline-end:7px;
+    border-radius:999px; background:rgba(139,92,246,.16); border:1px solid rgba(139,92,246,.35);
+    color:#a78bfa; font-size:11px; font-weight:800;
+  }
+  footer { text-align:center; color:var(--muted); font-size:12px; margin-top:10px; line-height:2; }
+</style>
+</head>
+<body>
+<header>
+  <h1>XDrop Marketplace</h1>
+  <p>پیش‌نمایش کامل پلتفرم پس از بازطراحی «Aurora» — ۱۰۰٪ صفحات با اسکرین‌شات واقعی از دیتای زنده<br>موبایل ۳۹۰px + دسکتاپ ۱۴۴۰px · فارسی/RTL · فونت وزیرمتن · تم تاریک و روشن</p>
+  <span class="badge">📊 <b>۲۹ اسکرین‌شات</b> · دیتابیس واقعی: ۴۶۶ کاربر، ۷ محصول فعال، ۱۰۸ سفارش، ۱۸۷,۶۷۲ کردیت</span>
+</header>
+
+<section>
+  <h2>موبایل — نمای اصلی (تاریک)</h2>
+  <p class="sec-sub">تجربه گوشی مثل مینی‌اپ تلگرام؛ نویگیشن پایین، کارت‌های شیشه‌ای و اعداد فارسی</p>
+  <div class="grid">
+    <figure><img src="01-mobile-overview.png" alt="نمای کلی موبایل"><figcaption><span class="num">۱</span>نمای کلی<small>شش KPI زنده + نمودار ۱۴ روزه درآمد/سفارش + محصولات برتر</small></figcaption></figure>
+    <figure><img src="02-mobile-market.png" alt="بازار موبایل"><figcaption><span class="num">۲</span>بازار<small>کارت محصول با قیمت ستاره/کردیت، وضعیت، ویرایش و بایگانی</small></figcaption></figure>
+    <figure><img src="03-mobile-orders.png" alt="سفارش‌ها موبایل"><figcaption><span class="num">۳</span>سفارش‌ها<small>فیلتر وضعیت + جدول اسکرو زندگی هر فروش</small></figcaption></figure>
+    <figure><img src="04-mobile-wallets.png" alt="کیف پول‌ها موبایل"><figcaption><span class="num">۴</span>کیف پول‌ها<small>موجودی، قفل‌شده و کردیت همه حساب‌ها</small></figcaption></figure>
+    <figure><img src="05-mobile-users.png" alt="کاربرها موبایل"><figcaption><span class="num">۵</span>کاربرها<small>۴۶۶ کاربر با نقش، زبان و تاریخ عضویت</small></figcaption></figure>
+    <figure><img src="06-mobile-quests.png" alt="ماموریت‌ها موبایل"><figcaption><span class="num">۶</span>ماموریت‌ها<small>۱۱ ماموریت با نوار پیشرفت و جایزه 💎/⚡</small></figcaption></figure>
+    <figure><img src="07-mobile-leaderboard.png" alt="جدول امتیازها موبایل"><figcaption><span class="num">۷</span>جدول امتیازها<small>سه نفر اول با مدال طلا/نقره/برنز — ImX صدرنشین</small></figcaption></figure>
+    <figure><img src="08-mobile-bookings.png" alt="رزروها موبایل"><figcaption><span class="num">۸</span>رزروها<small>جلسه‌های زمان‌بندی‌شده با کارت تاریخ</small></figcaption></figure>
+    <figure><img src="09-mobile-crm.png" alt="CRM موبایل"><figcaption><span class="num">۹</span>CRM<small>وارد کردن، حذف تکراری و بستن سرنخ‌ها</small></figcaption></figure>
+    <figure><img src="10-mobile-owner.png" alt="پنل مالک موبایل"><figcaption><span class="num">۱۰</span>پنل مالک<small>تأییدیه‌ها، پیام همگانی (HITL) و تنظیمات</small></figcaption></figure>
+    <figure><img src="11-mobile-settings.png" alt="تنظیمات موبایل"><figcaption><span class="num">۱۱</span>تنظیمات<small>زبان، تم، کلید مالک و درباره سیستم</small></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>دسکتاپ — مدیریت کامل (تاریک)</h2>
+  <p class="sec-sub">سایدبار راست‌چین با هایلایت گرادیان، جدول‌های حرفه‌ای و اکشن‌های واقعی</p>
+  <div class="grid">
+    <figure class="wide"><img src="15-desktop-overview.png" alt="نمای کلی دسکتاپ"><figcaption><span class="num">۱۲</span>نمای کلی دسکتاپ<small>KPIها + نمودار زنده + محصولات برتر با نوار رتبه + آخرین سفارش‌ها</small></figcaption></figure>
+    <figure><img src="16-desktop-market.png" alt="بازار دسکتاپ"><figcaption><span class="num">۱۳</span>بازار<small>گرید ۴ ستونه محصولات با جستجو و صفحه‌بندی</small></figcaption></figure>
+    <figure><img src="17-desktop-market-edit.png" alt="ویرایش محصول"><figcaption><span class="num">۱۴</span>ویرایش محصول<small>فرم کامل: عنوان، دسته، قیمت ستاره/کردیت، موجودی، ویژه، فعال</small></figcaption></figure>
+    <figure><img src="18-desktop-orders.png" alt="سفارش‌ها دسکتاپ"><figcaption><span class="num">۱۵</span>سفارش‌ها<small>اکشن‌های تحویل/لغو/بازپرداخت روی هر سفارش</small></figcaption></figure>
+    <figure><img src="19-desktop-wallets.png" alt="کیف پول‌ها دسکتاپ"><figcaption><span class="num">۱۶</span>کیف پول‌ها<small>ترازنامه کامل با اعداد فارسی</small></figcaption></figure>
+    <figure><img src="20-desktop-quests.png" alt="ماموریت‌ها دسکتاپ"><figcaption><span class="num">۱۷</span>ماموریت‌ها<small>گرید ۳ ستونه با پیشرفت و جوایز</small></figcaption></figure>
+    <figure><img src="21-desktop-leaderboard.png" alt="جدول امتیازها دسکتاپ"><figcaption><span class="num">۱۸</span>جدول امتیازها<small>تب‌های امتیاز/فروش/معرفی</small></figcaption></figure>
+    <figure><img src="22-desktop-bookings.png" alt="رزروها دسکتاپ"><figcaption><span class="num">۱۹</span>رزروها<small>لیست جلسه‌ها با چیپ وضعیت</small></figcaption></figure>
+    <figure><img src="23-desktop-crm.png" alt="CRM دسکتاپ"><figcaption><span class="num">۲۰</span>CRM<small>KPI سرنخ‌ها + نرخ موفقیت + سرنخ‌های ۲۴ ساعت</small></figcaption></figure>
+    <figure><img src="24-desktop-owner.png" alt="پنل مالک دسکتاپ"><figcaption><span class="num">۲۱</span>پنل مالک<small>تأییدیه‌ها، پیام همگانی، تنظیمات و ۱۵ لایه امنیتی + لاگ حسابرسی</small></figcaption></figure>
+    <figure><img src="25-desktop-settings.png" alt="تنظیمات دسکتاپ"><figcaption><span class="num">۲۲</span>تنظیمات<small>۴ زبان، سوییچ تم، کلید مالک، وضعیت سیستم</small></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>تم روشن</h2>
+  <p class="sec-sub">همان هویت بصری با پس‌زمینه روشن — سوییچ از تنظیمات</p>
+  <div class="grid">
+    <figure class="wide"><img src="26-desktop-light-overview.png" alt="تم روشن دسکتاپ"><figcaption><span class="num">۲۳</span>نمای کلی — تم روشن<small>کارت‌های سفید با همان گرادیان‌های برند</small></figcaption></figure>
+    <figure><img src="27-mobile-light-market.png" alt="تم روشن موبایل"><figcaption><span class="num">۲۴</span>بازار — تم روشن<small>حالت روشن روی موبایل</small></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>دسترسی مهمان، قفل مالک و احراز هویت</h2>
+  <p class="sec-sub">بازار و نمای کلی برای مخاطب بدون کلید قابل دیدن است؛ بخش‌های حساس با پنل قفل محافظت می‌شوند</p>
+  <div class="grid">
+    <figure><img src="28-mobile-locked-overview.png" alt="نمای مهمان"><figcaption><span class="num">۲۵</span>نمای مهمان — نمای کلی<small>بدون کلید مالک؛ داده‌های عمومی قابل مشاهده</small></figcaption></figure>
+    <figure><img src="30-mobile-locked-market.png" alt="بازار مهمان"><figcaption><span class="num">۲۶</span>نمای مهمان — بازار<small>مشاهده محصولات بدون دکمه‌های مدیریتی</small></figcaption></figure>
+    <figure><img src="31-mobile-locked-orders.png" alt="سفارش‌های قفل"><figcaption><span class="num">۲۷</span>پنل قفل<small>«دسترسی مالک لازم است» + توست هشدار زنده</small></figcaption></figure>
+    <figure><img src="29-mobile-key-modal.png" alt="مودال کلید مالک"><figcaption><span class="num">۲۸</span>مودال کلید مالک<small>ورود DASHBOARD_KEY — فقط در همین مرورگر ذخیره می‌شود</small></figcaption></figure>
+    <figure><img src="32-desktop-locked-orders.png" alt="قفل دسکتاپ"><figcaption><span class="num">۲۹</span>قفل + مودال روی دسکتاپ<small>بک‌دراپ بلورشده شیشه‌ای</small></figcaption></figure>
+  </div>
+</section>
+
+<footer>
+  XDrop Marketplace · بازطراحی Aurora · داشبورد PWA زنده روی پورت 3000 · بات تلگرام @XdropmeXbot<br>
+  ساخته‌شده با دیتای واقعی بازیابی‌شده از بکاپ Railway
+</footer>
+</body>
+</html>

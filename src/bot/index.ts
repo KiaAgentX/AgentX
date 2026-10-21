@@ -15,6 +15,7 @@ import { registerStart } from './handlers/start';
 import { registerMarket } from './handlers/market';
 import { registerWallet } from './handlers/wallet';
 import { registerOrders } from './handlers/orders';
+import { registerSales } from './handlers/sales';
 import { registerQuests } from './handlers/quests';
 import { registerBookings } from './handlers/bookings';
 import { registerOwner } from './handlers/owner';
@@ -35,39 +36,65 @@ import { registerAiFallback } from './handlers/ai';
 
 type SendMessageExtra = Parameters<Api['sendMessage']>[2];
 
-/** Panic-mode gate: when Setting `kill_switch` is 'true', only staff pass. */
+/** Panic-mode gate: when Setting `kill_switch` is 'true', only staff pass. Fail-closed. */
 async function panicGate(ctx: BotContext, next: () => Promise<void>): Promise<void> {
+  const telegramId = ctx.from ? String(ctx.from.id) : '';
+  if (isStaffTelegramId(telegramId)) {
+    await next();
+    return;
+  }
   try {
-    const telegramId = ctx.from ? String(ctx.from.id) : '';
-    if (!isStaffTelegramId(telegramId) && (await getSetting('kill_switch')) === 'true') {
+    if ((await getSetting('kill_switch')) === 'true') {
       await ctx.reply(t(ctx.user.language, 'panic_mode'));
       return;
     }
   } catch (err) {
-    // Never let the gate break the bot — fail open; the security pipeline
-    // re-checks panic mode for AI messages anyway.
-    logger.warn({ err }, '🚨 panic gate check failed (fail-open)');
+    // Fail-closed: if we cannot read the kill switch, block non-staff traffic.
+    logger.warn({ err }, '🚨 panic gate check failed (fail-closed)');
+    await ctx.reply(t(ctx.user?.language ?? 'en', 'error_generic')).catch(() => undefined);
+    return;
   }
   await next();
 }
 
 /** Deliver service-emitted bus events to Telegram. Subscribed once per bot. */
 function wireBus(bot: Bot<BotContext>): void {
+  /**
+   * Delivery with bounded retry — a single dropped sendMessage must not
+   * silently swallow "your order was paid / your withdrawal was approved".
+   */
+  const sendWithRetry = async (
+    chatId: string,
+    text: string,
+    extra: SendMessageExtra | undefined,
+    label: string,
+    labelId: string | number
+  ): Promise<void> => {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await bot.api.sendMessage(chatId, text, extra);
+        return;
+      } catch (err) {
+        if (attempt === 3) {
+          logger.warn({ err, [label]: labelId, attempts: 3 }, '📨 notify delivery failed after retries');
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+      }
+    }
+  };
+
   onBus<NotifyUserPayload>(BUS_EVENTS.NOTIFY_USER, ({ telegramId, text, keyboard }) => {
     const extra: SendMessageExtra | undefined =
       keyboard === undefined ? undefined : ({ reply_markup: keyboard } as unknown as SendMessageExtra);
-    void bot.api
-      .sendMessage(telegramId, text, extra)
-      .catch((err) => logger.warn({ err, telegramId }, '📨 notify:user delivery failed'));
+    void sendWithRetry(telegramId, text, extra, 'telegramId', telegramId);
   });
 
   onBus<NotifyOwnerPayload>(BUS_EVENTS.NOTIFY_OWNER, ({ text, keyboard }) => {
     const extra: SendMessageExtra | undefined =
       keyboard === undefined ? undefined : ({ reply_markup: keyboard } as unknown as SendMessageExtra);
     for (const ownerId of config.access.ownerIds) {
-      void bot.api
-        .sendMessage(String(ownerId), text, extra)
-        .catch((err) => logger.warn({ err, ownerId }, '📨 notify:owner delivery failed'));
+      void sendWithRetry(String(ownerId), text, extra, 'ownerId', ownerId);
     }
   });
 
@@ -75,9 +102,7 @@ function wireBus(bot: Bot<BotContext>): void {
     const text = `${t('en', 'approval_created')}\n\n#${payload.type} · ${payload.riskLevel}\n${payload.summary}`;
     const markup = approvalKeyboard(payload.approvalId, 'en');
     for (const ownerId of config.access.ownerIds) {
-      void bot.api
-        .sendMessage(String(ownerId), text, { reply_markup: markup })
-        .catch((err) => logger.warn({ err, ownerId }, '📨 approval notification failed'));
+      void sendWithRetry(String(ownerId), text, { reply_markup: markup } as unknown as SendMessageExtra, 'ownerId', ownerId);
     }
   });
 }
@@ -112,6 +137,7 @@ export async function createBot(): Promise<Bot> {
   registerMarket(bot);
   registerWallet(bot);
   registerOrders(bot);
+  registerSales(bot);
   registerQuests(bot);
   registerBookings(bot);
   registerOwner(bot);
@@ -144,12 +170,41 @@ export async function startBot(bot: Bot): Promise<void> {
   }
 
   logger.info('🤖 long-polling mode (no PUBLIC_URL/TELEGRAM_WEBHOOK_SECRET configured)');
-  void bot
-    .start({ drop_pending_updates: true, onStart: (me) => logger.info(`🤖 @${me.username} is up (long polling)`) })
-    .catch((err) => logger.error({ err }, '🤖 long polling stopped with an error'));
+
+  /**
+   * Long polling with capped exponential backoff: a network blip or a 409
+   * conflict no longer leaves a silently dead bot — it reconnects (max 5
+   * attempts, then escalates to the owner through every alive channel).
+   */
+  let polling = true;
+  const runPolling = async (): Promise<void> => {
+    for (let attempt = 1; polling && attempt <= 5; attempt++) {
+      try {
+        await bot.start({ drop_pending_updates: attempt === 1, onStart: (me) => logger.info(`🤖 @${me.username} is up (long polling)`) });
+        return; // clean stop() — do not restart
+      } catch (err) {
+        if (!polling) return;
+        const delayMs = Math.min(30_000, 2 ** attempt * 1_000);
+        logger.error({ err, attempt, retryInMs: delayMs }, '🤖 long polling crashed — restarting with backoff');
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+    if (polling) {
+      logger.error('🤖 long polling gave up after 5 attempts — bot is DOWN');
+      for (const ownerId of config.access.ownerIds) {
+        try {
+          await bot.api.sendMessage(String(ownerId), '🚨 BOT DOWN: long polling failed 5 times — the process keeps serving the dashboard, but the bot is offline. Restart the process.');
+        } catch {
+          // cannot reach the owner — nothing else we can do
+        }
+      }
+    }
+  };
+  void runPolling();
 
   // Graceful stop on SIGTERM/SIGINT (the main entrypoint exits afterwards).
   const stop = (): void => {
+    polling = false;
     void bot.stop().catch((err) => logger.warn({ err }, '🤖 bot.stop() failed'));
   };
   process.once('SIGTERM', stop);

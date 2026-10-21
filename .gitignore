@@ -26,3 +26,13 @@ Thumbs.db
 .idea/
 .vscode/
 tmp/
+
+# Desktop release builds (electron-builder output)
+release/
+
+# Release binaries (installers/APK — attach to GitHub Releases, never git)
+distribution/
+*.apk
+
+# Electron desktop smoke-test sandbox
+scripts/.e-test/

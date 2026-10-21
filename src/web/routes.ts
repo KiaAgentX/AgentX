@@ -4,6 +4,7 @@ import { config } from '../config';
 import { db } from '../core/db';
 import { logger } from '../core/logger';
 import { AppError, NotFoundError, ValidationError } from '../core/errors';
+import { safeEqualString } from '../core/crypto';
 import { createApproval, listPending, resolveApproval } from '../services/hitl.service';
 import { getAllSettings, setSetting } from '../services/settings.service';
 import * as marketplace from '../services/marketplace.service';
@@ -13,6 +14,8 @@ import * as leaderboardService from '../services/leaderboard.service';
 import * as crm from '../services/crm.service';
 import { getBrand } from '../services/settings.service';
 import { SECURITY_LAYERS_DOC } from '../security';
+import { mintStreamToken } from '../security/stream-token';
+import { SlidingWindowRateLimiter } from '../security/rate-limiter';
 import type { PendingApprovalView } from '../types';
 
 /**
@@ -32,12 +35,28 @@ function fail(res: Response, code: string, status: number): void {
   res.status(status).json({ ok: false, error: code });
 }
 
+/** Brute-force budget: 15 failed auth attempts per IP per minute → 429. */
+const authFailLimiter = new SlidingWindowRateLimiter(15, 60_000);
+
+function clientIp(req: Request): string {
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
+/** Timing-safe dashboard key check + per-IP lockout on repeated failures. */
 function requireKey(req: Request, res: Response, next: NextFunction): void {
-  const key = req.header('X-KIA-Key');
-  if (!key || key !== config.web.dashboardKey) {
+  const key = req.header('X-KIA-Key') ?? '';
+  if (!key || !safeEqualString(key, config.web.dashboardKey)) {
+    const gate = authFailLimiter.hit(`auth:${clientIp(req)}`);
+    if (!gate.allowed) {
+      res.set('Retry-After', String(gate.retryAfterSec));
+      fail(res, 'rate_limited', 429);
+      return;
+    }
     fail(res, 'unauthorized', 401);
     return;
   }
+  // A correct key clears the failure history for this IP.
+  authFailLimiter.resetKey(`auth:${clientIp(req)}`);
   next();
 }
 
@@ -108,6 +127,41 @@ async function staffActorId(): Promise<string> {
   throw new NotFoundError('Staff user (create the owner first — run scripts/seed.ts)');
 }
 
+/**
+ * Public product projection — delivery payloads are PAID SECRET CONTENT and
+ * must never leave the server through a public endpoint. Only whitelisted
+ * columns are exposed (also hides sellerId / aiGenerated internals).
+ */
+function toPublicProduct(p: {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  priceStars: number;
+  priceCredits: number;
+  stock: number;
+  salesCount: number;
+  featured: boolean;
+  ratingAvg: number;
+  ratingCount: number;
+  createdAt: Date;
+}): Record<string, unknown> {
+  return {
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    category: p.category,
+    priceStars: p.priceStars,
+    priceCredits: p.priceCredits,
+    stock: p.stock,
+    salesCount: p.salesCount,
+    featured: p.featured,
+    ratingAvg: p.ratingAvg,
+    ratingCount: p.ratingCount,
+    createdAt: p.createdAt.toISOString(),
+  };
+}
+
 const PRODUCT_STATUSES = ['draft', 'active', 'archived', 'flagged'];
 const PAID_STATUSES = ['paid', 'delivered', 'completed'];
 
@@ -124,9 +178,10 @@ export function createApiRouter(): Router {
     })
   );
 
-  // ── System: overview (public) ──────────────────────────────────────────────
+  // ── System: overview (owner data — revenue, buyers, approvals) ──────────────
   router.get(
     '/overview',
+    requireKey,
     wrap(async (_req, res) => {
       const since24h = new Date(Date.now() - 24 * 3600 * 1000);
       const since14d = new Date(Date.now() - 13 * 24 * 3600 * 1000);
@@ -210,7 +265,16 @@ export function createApiRouter(): Router {
         search: qStr(req.query.q) ?? undefined,
         category: qStr(req.query.category) ?? undefined,
       });
-      ok(res, { items: result.items, total: result.total });
+      ok(res, { items: result.items.map(toPublicProduct), total: result.total });
+    })
+  );
+
+  // ── SSE stream token (X-KIA-Key protected; EventSource cannot send headers)
+  router.post(
+    '/stream-token',
+    requireKey,
+    wrap(async (_req, res) => {
+      ok(res, mintStreamToken());
     })
   );
 
@@ -394,7 +458,8 @@ export function createApiRouter(): Router {
   router.get(
     '/quests',
     wrap(async (_req, res) => {
-      await questService.ensureDefaultQuests();
+      // Read-only: defaults are seeded once at boot (src/index.ts) — writing on
+      // every GET caused latency, write-amplification and reset custom titles.
       const quests = await db.quest.findMany({ where: { active: true }, orderBy: [{ type: 'asc' }, { code: 'asc' }] });
       ok(res, {
         items: quests.map((q) => ({
@@ -597,7 +662,9 @@ export function createApiRouter(): Router {
       if (!text) throw new ValidationError('text is required');
       const item = await createApproval({
         type: 'broadcast',
-        summary: `Broadcast: ${text.slice(0, 80)}`,
+        // Full text in the card (400-char summary limit) — the owner must be
+        // able to see exactly what they are approving.
+        summary: `📣 Broadcast: ${text.slice(0, 360)}${text.length > 360 ? '…' : ''}`,
         riskLevel: 'high',
         toolName: 'broadcast_request',
         payload: { text, requestedBy: 'dashboard' },

@@ -8,7 +8,6 @@ import { getCreditsPerStar } from '../../services/settings.service';
 import { getBalance, getHistory, requestWithdrawal, transferCredits } from '../../services/wallet.service';
 import type { BotContext } from '../context';
 import { editOrReply, insufficientFundsReply } from '../keyboards';
-import { WITHDRAW_PROMPT } from './wizard';
 
 /**
  * /wallet · /transfer · /withdraw · /history + `topup` / `transfer` /
@@ -20,16 +19,48 @@ import { WITHDRAW_PROMPT } from './wizard';
  * Transfer uses a command-style wizard: `session.wizard = { name: 'transfer' }`
  * makes the next "<target> <amount>" text message complete the transfer
  * (step logic lives in wizard.ts). Prompts reuse t('transfer_hint').
- *
- * DEVIATION: EN.json has no short button labels for Transfer / Withdraw /
- * History (and no withdraw prompt) — literal emoji labels + WITHDRAW_PROMPT
- * from wizard.ts are used. See worklog Task 2-b.
  */
 
-const TRANSFER_LABEL = '💸 Transfer';
-const WITHDRAW_LABEL = '🏧 Withdraw';
-const HISTORY_LABEL = '🧾 History';
 const TOPUP_STARS = 100;
+
+/** Human-readable transaction label: emoji + localized type + legacy description. */
+const TX_LABEL_KEYS: Readonly<Record<string, string>> = {
+  purchase: 'tx_purchase',
+  sale: 'tx_sale',
+  topup_manual: 'tx_topup_manual',
+  topup_stars: 'tx_topup_stars',
+  referral_bonus: 'tx_referral_bonus',
+  quest_reward: 'tx_quest_reward',
+  bonus: 'tx_bonus',
+  withdraw: 'tx_withdraw',
+  refund: 'tx_refund',
+  transfer_in: 'tx_transfer_in',
+  transfer_out: 'tx_transfer_out',
+  commission: 'tx_commission',
+  ai_usage: 'tx_ai_usage',
+  adjustment: 'tx_adjustment',
+};
+
+interface TxMeta {
+  legacyType?: string;
+  description?: string;
+}
+
+function txLine(lang: string, tx: { amount: number; currency: string; type: string; meta: string | null; createdAt: Date }): string {
+  const when = tx.createdAt.toISOString().slice(5, 16).replace('T', ' ');
+  const currency = tx.currency === 'stars' ? '⭐' : '💎';
+  const amount = `${tx.amount >= 0 ? '+' : ''}${tx.amount}${currency}`;
+  const key = TX_LABEL_KEYS[tx.type];
+  const label = key ? t(lang, key) : `${t(lang, 'tx_other')} ${tx.type}`;
+  let meta: TxMeta = {};
+  try {
+    meta = tx.meta ? (JSON.parse(tx.meta) as TxMeta) : {};
+  } catch {
+    meta = {};
+  }
+  const desc = (meta.description ?? '').trim().slice(0, 40);
+  return `${when} · ${amount} · ${label}${desc ? ` — ${desc}` : ''}`;
+}
 
 export async function showWallet(ctx: BotContext): Promise<void> {
   const lang = ctx.user.language;
@@ -43,10 +74,10 @@ export async function showWallet(ctx: BotContext): Promise<void> {
 
   const kb = new InlineKeyboard()
     .text(t(lang, 'topup'), 'topup')
-    .text(TRANSFER_LABEL, 'transfer')
+    .text(t(lang, 'menu_transfer'), 'transfer')
     .row()
-    .text(WITHDRAW_LABEL, 'withdraw')
-    .text(HISTORY_LABEL, 'history')
+    .text(t(lang, 'menu_withdraw'), 'withdraw')
+    .text(t(lang, 'menu_history'), 'history')
     .row()
     .text(t(lang, 'back'), 'menu:root');
 
@@ -56,12 +87,7 @@ export async function showWallet(ctx: BotContext): Promise<void> {
 export async function showHistory(ctx: BotContext): Promise<void> {
   const lang = ctx.user.language;
   const res = await getHistory(ctx.user.id, 10);
-  const lines = res.items.map(
-    (tx) =>
-      `${tx.createdAt.toISOString().slice(0, 16).replace('T', ' ')}Z · ${
-        tx.amount >= 0 ? '+' : ''
-      }${tx.amount} ${tx.currency === 'stars' ? '⭐' : '💎'} (${tx.type})`
-  );
+  const lines = res.items.map((tx) => txLine(lang, tx));
   const text = `${t(lang, 'history_title')}\n\n${lines.length > 0 ? lines.join('\n') : '—'}`;
   const kb = new InlineKeyboard().text(t(lang, 'back'), 'menu:wallet');
   await editOrReply(ctx, text, kb);
@@ -87,7 +113,7 @@ async function doWithdraw(ctx: BotContext, amountRaw: string): Promise<void> {
   const lang = ctx.user.language;
   const amount = Math.floor(Number(amountRaw.trim()));
   if (!Number.isInteger(amount) || amount <= 0) {
-    await ctx.reply(WITHDRAW_PROMPT);
+    await ctx.reply(t(lang, 'withdraw_prompt'));
     return;
   }
   await requestWithdrawal(ctx.user.id, amount);
@@ -109,8 +135,16 @@ async function doTransfer(ctx: BotContext, targetRaw: string, amountRaw: string)
     await ctx.reply(t(lang, 'error_generic'));
     return;
   }
-  await transferCredits(ctx.user.id, target.id, amount);
-  await ctx.reply(t(lang, 'transfer_sent', { amount, user: target.firstName || target.username || target.telegramId }));
+  // Two-step confirmation — a typo in username or amount must be recoverable.
+  ctx.session.wizard = {
+    name: 'transfer',
+    step: 1,
+    data: { targetId: target.id, targetName: target.firstName || target.username || target.telegramId, amount: String(amount) },
+  };
+  const kb = new InlineKeyboard()
+    .text(t(lang, 'confirm_yes'), 'trcf:yes')
+    .text(t(lang, 'confirm_no'), 'trcf:no');
+  await ctx.reply(t(lang, 'transfer_confirm', { amount, user: target.firstName || target.username || target.telegramId }), { reply_markup: kb });
 }
 
 /** Unified error mapping for wallet money-flows. */
@@ -144,7 +178,7 @@ export function registerWallet(bot: Bot<BotContext>): void {
       const arg = (ctx.match ?? '').trim();
       if (!arg) {
         ctx.session.wizard = { name: 'withdraw', step: 0, data: {} };
-        await ctx.reply(WITHDRAW_PROMPT);
+        await ctx.reply(t(ctx.user.language, 'withdraw_prompt'));
         return;
       }
       await doWithdraw(ctx, arg);
@@ -182,7 +216,7 @@ export function registerWallet(bot: Bot<BotContext>): void {
     await ctx.answerCallbackQuery().catch(() => undefined);
     try {
       ctx.session.wizard = { name: 'withdraw', step: 0, data: {} };
-      await ctx.reply(WITHDRAW_PROMPT);
+      await ctx.reply(t(ctx.user.language, 'withdraw_prompt'));
     } catch (err) {
       logger.warn({ err }, '⛔ withdraw wizard start failed');
       await ctx.reply(t(ctx.user.language, 'error_generic')).catch(() => undefined);
@@ -196,6 +230,36 @@ export function registerWallet(bot: Bot<BotContext>): void {
     } catch (err) {
       logger.warn({ err }, '⛔ history callback failed');
       await ctx.reply(t(ctx.user.language, 'error_generic')).catch(() => undefined);
+    }
+  });
+
+  // Transfer confirmation buttons (wizard step 1 — data lives in the session).
+  bot.callbackQuery(/^trcf:(yes|no)$/, async (ctx) => {
+    await ctx.answerCallbackQuery().catch(() => undefined);
+    const lang = ctx.user.language;
+    const wizard = ctx.session.wizard;
+    if (!wizard || wizard.name !== 'transfer' || wizard.step !== 1) {
+      await ctx.reply(t(lang, 'transfer_cancelled'));
+      return;
+    }
+    if (ctx.match[1] === 'no') {
+      ctx.session.wizard = undefined;
+      await ctx.reply(t(lang, 'transfer_cancelled'));
+      return;
+    }
+    const targetId = wizard.data?.targetId;
+    const amount = Number(wizard.data?.amount);
+    ctx.session.wizard = undefined;
+    if (typeof targetId !== 'string' || !Number.isInteger(amount) || amount <= 0) {
+      await ctx.reply(t(lang, 'error_generic'));
+      return;
+    }
+    try {
+      await transferCredits(ctx.user.id, targetId, amount);
+      await ctx.reply(t(lang, 'transfer_sent', { amount, user: wizard.data?.targetName ?? targetId }));
+    } catch (err) {
+      logger.warn({ err }, '⛔ transfer confirm failed');
+      await ctx.reply(walletErrorText(lang, err)).catch(() => undefined);
     }
   });
 }

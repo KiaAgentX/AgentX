@@ -1,0 +1,28 @@
+# ── XDrop (KIA DropAgentX) — keep secrets & junk out of the image ────────────
+.env
+.env.*
+!.env.example
+
+# Git / CI
+.git
+.github
+
+# Dependencies & build artifacts (installed inside the image)
+node_modules
+dist
+
+# Local data & logs — NEVER bake user data or secrets into layers
+db
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+logs
+server.log
+
+# Docs assets that are not needed at runtime
+docs/screenshots
+
+# OS noise
+.DS_Store
+Thumbs.db

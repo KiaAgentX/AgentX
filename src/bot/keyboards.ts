@@ -22,16 +22,16 @@ import type { BotContext } from './context';
  */
 
 /**
- * NOTE: a handful of short button labels have no dedicated i18n key in
- * locales/en.json (e.g. a compact "Market" label — `market_title` carries a
- * {page}/{pages} placeholder and cannot be reused). They are kept as literal
- * emoji labels and documented as a deviation in worklog Task 2-b.
+ * NOTE: a handful of short button labels previously had no dedicated i18n key.
+ * They now use the added keys (menu_market / menu_lang / menu_transfer /
+ * menu_withdraw / menu_history / panic_label / broadcast_label) — see worklog
+ * Task 3. Locales without the key fall back to English via the i18n engine.
  */
 
 /** Main menu: market/wallet/orders · quests/leaderboard/ref · book/help/lang (+ owner panel row for staff). */
 export function mainMenuKeyboard(lang: string, isStaff: boolean): InlineKeyboard {
   const kb = new InlineKeyboard()
-    .text('🛍 Market', 'menu:market')
+    .text(t(lang, 'menu_market'), 'menu:market')
     .text(t(lang, 'wallet_title'), 'menu:wallet')
     .text(t(lang, 'orders_title'), 'menu:orders')
     .row()
@@ -41,7 +41,7 @@ export function mainMenuKeyboard(lang: string, isStaff: boolean): InlineKeyboard
     .row()
     .text(t(lang, 'booking_title'), 'menu:book')
     .text(t(lang, 'help_title'), 'menu:help')
-    .text('🌐 Lang', 'menu:lang');
+    .text(t(lang, 'menu_lang'), 'menu:lang');
   if (isStaff) kb.row().text(t(lang, 'owner_panel'), 'menu:owner');
   return kb;
 }

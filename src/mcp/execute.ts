@@ -6,6 +6,7 @@ import { logger } from '../core/logger';
 import { AppError } from '../core/errors';
 import { createApproval } from '../services/hitl.service';
 import { runSecurityPipeline } from '../security';
+import { verifyToolToken } from '../security/mcp-token';
 import * as marketplace from '../services/marketplace.service';
 import * as walletService from '../services/wallet.service';
 import * as orderService from '../services/order.service';
@@ -559,6 +560,17 @@ export async function executeTool(
   ctx: CallContext
 ): Promise<ToolResult> {
   try {
+    // L12 — tool-token verification is REAL at this boundary: when a call
+    // carries a token (external/A2A callers), it must be valid, unexpired and
+    // scoped to THIS tool — otherwise fail closed.
+    if (ctx.toolToken !== undefined && ctx.toolToken !== null) {
+      const verdict = verifyToolToken(ctx.toolToken, toolName);
+      if (!verdict.ok) {
+        logger.warn({ toolName, reason: verdict.reason }, '🔐 L12 tool token rejected — fail closed');
+        return { ok: false, error: 'unauthorized', message: `tool token rejected: ${verdict.reason}` };
+      }
+    }
+
     const pipeline = await runSecurityPipeline({
       telegramId: ctx.telegramId ?? null,
       userId: ctx.userId ?? null,

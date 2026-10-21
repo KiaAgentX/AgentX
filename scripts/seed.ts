@@ -1,8 +1,8 @@
 import 'dotenv/config'; // MUST be first — loads .env before config.ts parses process.env
 import { config } from '../src/config';
-import { db } from '../src/lib/db';
-import { logger } from '../src/lib/logger';
-import { newId } from '../src/lib/ids';
+import { db } from '../src/core/db';
+import { logger } from '../src/core/logger';
+import { newId } from '../src/core/ids';
 import { SETTING_DEFAULTS, setSetting } from '../src/services/settings.service';
 import { ensureDefaultQuests } from '../src/services/quest.service';
 import { creditWallet, getOrCreateWallet } from '../src/services/wallet.service';
@@ -234,6 +234,25 @@ async function seedDemoUsersAndOrders(ownerId: string): Promise<{ users: number;
 }
 
 async function main(): Promise<void> {
+  // ── Restored-data guard ────────────────────────────────────────────────────
+  // The seed script is idempotent per-item, but it is meant for FRESH installs:
+  // running it on a restored production database would inject demo users,
+  // demo products and 1,000,000 credits of demo funding into your economy.
+  const existingUsers = await db.user.count();
+  if (existingUsers > 10 && !process.argv.includes('--force')) {
+    logger.error(
+      { existingUsers },
+      '🛑 This database already contains users — refusing to seed demo data. Run with --force to override.'
+    );
+    // eslint-disable-next-line no-console
+    console.error(
+      `⚠️  Database has ${existingUsers} users — this looks like RESTORED data.\n` +
+      '   Seeding demo artifacts into it would corrupt your economy.\n' +
+      '   If you REALLY want demo data on top: npm run seed -- --force'
+    );
+    process.exit(1);
+  }
+
   logger.info('🌱 seeding KIA DropAgentX…');
 
   const owner = await seedOwner();

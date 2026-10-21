@@ -19,7 +19,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-10b981?labelColor=09090b)](CONTRIBUTING.md)
 [![Stars](https://img.shields.io/badge/%E2%AD%90-star%20if%20useful-ffc107?labelColor=09090b)](#)
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template?template=https://github.com/KiaAgentX/KIAdropAgentX)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template?template=https://github.com/KiaAgentX/DropAgentX)
 
 [Features](#-features) · [Architecture](#-architecture) · [Quickstart](#-quickstart) · [Deploy](#-deploy-to-railway-in-5-minutes) · [Clients](#-three-clients-one-core) · [Security](#-security--15-layers-fail-closed) · [API](docs/API.md)
 
@@ -48,6 +48,34 @@ dashboard and a desktop client, all backed by the same API and audit trail.
 
 ---
 
+## 📸 See It Before You Run It
+
+Real screenshots — **zero mockups**. Every pixel below is captured live from a
+running instance with real data (Persian RTL, Aurora theme). 29 captures total:
+[desktop + mobile · dark + light · owner + guest](docs/screenshots/index.html).
+
+| Desktop — Overview | Desktop — Marketplace |
+|---|---|
+| <img src="docs/screenshots/15-desktop-overview.png" alt="Desktop overview — KPIs, sales chart, live orders feed" width="100%"/> | <img src="docs/screenshots/16-desktop-market.png" alt="Desktop marketplace — product management" width="100%"/> |
+
+| Desktop — Orders | Desktop — Quests & XP |
+|---|---|
+| <img src="docs/screenshots/18-desktop-orders.png" alt="Desktop orders — escrow lifecycle management" width="100%"/> | <img src="docs/screenshots/20-desktop-quests.png" alt="Desktop quests and XP progression" width="100%"/> |
+
+| Desktop — Leaderboard | Desktop — Lead CRM |
+|---|---|
+| <img src="docs/screenshots/21-desktop-leaderboard.png" alt="Desktop leaderboard with medals" width="100%"/> | <img src="docs/screenshots/23-desktop-crm.png" alt="Desktop lead CRM pipeline" width="100%"/> |
+
+| Mobile (PWA) | Light theme |
+|---|---|
+| <img src="docs/screenshots/01-mobile-overview.png" alt="Mobile PWA overview with bottom navigation" width="70%"/> | <img src="docs/screenshots/26-desktop-light-overview.png" alt="Light theme overview" width="100%"/> |
+
+> 🔐 Owner access is **key-gated** — guests see locked states with a clean key
+> modal (fail-closed, 401 without the header). See all 29:
+> **[docs/screenshots/index.html](docs/screenshots/index.html)**
+
+---
+
 ## ✨ Features
 
 ### 🤖 AI Agent Crew (6 specialists, 25 languages)
@@ -62,7 +90,8 @@ dashboard and a desktop client, all backed by the same API and audit trail.
 
 ### 🛒 Marketplace & Money (integer math only)
 - Products with Stars **and** credits pricing, categories, stock, featured slots, reviews
-- **Escrow order lifecycle**: pending → paid → delivered → (disputed) → completed/refunded
+- **Public nation page**: `/nation.html` — flag, emblem, digital passport and the citizen registry showcase (part of the Digital Nation roadmap)
+- **Escrow order lifecycle**: pending → paid → delivered → refunded (or cancelled while pending). Disputes run through the HITL refund flow.
 - ⭐ Telegram Stars invoices + 💳 internal credits (dual currency)
 - Wallet: deposit, transfer, **HITL-gated withdrawals**, full transaction history
 - Coupons, quests & XP (daily/weekly/one-time), streaks, referral program, leaderboards
@@ -151,12 +180,17 @@ deny. AI offline → deterministic fallback. Secrets in AI output → redacted.
 ```bash
 # 1 — Clone
 git clone https://github.com/<you>/KIAdropAgentX.git
-cd KIAdropagentx
+cd DropAgentX
 
 # 2 — Install & provision (DB + demo seed)
 npm install
 cp .env.example .env          # then edit — see table below
 npm run setup                 # prisma push + seed
+
+> ⚠️ **Restoring your own data instead of a fresh demo?** Skip `npm run setup`
+> (or just the seed step). The seed script refuses to run on a database that
+> already has users — pass `--force` only if you really want demo data on top.
+> Restore: stop the server → replace `db/custom.db` with your backup → restart.
 
 # 3 — Run
 npm run dev                   # dashboard on http://localhost:3000
@@ -166,13 +200,13 @@ npm run dev                   # dashboard on http://localhost:3000
 ```
 
 That's it — the platform boots in **web-only mode** without a bot token, and in
-**full mode** once `BOT_TOKEN` is set. Database is a local SQLite file: `db/kia.db`.
+**full mode** once `BOT_TOKEN` is set. Database is a local SQLite file: `db/custom.db`.
 
 ### 🔑 Environment variables
 
 | Variable | Required | Default | Description |
 |---|:---:|---|---|
-| `DATABASE_URL` | ✔ | `file:../db/kia.db` | SQLite path (relative to `prisma/`). Railway: keep + mount volume |
+| `DATABASE_URL` | ✔ | `file:../db/custom.db` | SQLite path (relative to `prisma/`). Railway: keep + mount volume |
 | `BOT_TOKEN` | – | – | From [@BotFather](https://t.me/BotFather). Empty = web-only mode |
 | `BOT_USERNAME` | – | – | Bot handle without `@` (referral links) |
 | `PUBLIC_URL` | – | – | Public HTTPS URL → enables **webhook** mode; empty = long-polling |
@@ -202,12 +236,12 @@ The repo is **Railway-ready out of the box** (`railway.json` + `nixpacks.toml` +
 ```bash
 git init && git add -A && git commit -m "🚀 KIA DropAgentX Ultimate"
 git branch -M main
-git remote add origin https://github.com/<you>/KIAdropagentx.git
+git remote add origin https://github.com/<you>/DropAgentX.git
 git push -u origin main
 ```
 
 ### Step 2 — Create the Railway service
-1. Go to [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo** → pick `KIAdropagentx`
+1. Go to [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo** → pick `DropAgentX`
 2. Railway auto-detects Nixpacks: `npm install → npm run build → start` — no config needed
 
 ### Step 3 — Add a Volume (persistent SQLite)
@@ -236,13 +270,31 @@ DASHBOARD_KEY=<openssl rand -hex 24>
 <summary><b>🐳 Other deployment paths</b></summary>
 
 ```bash
-# Docker (any VPS)
+# Docker Compose (recommended — persistent volume + healthcheck)
+cp .env.example .env   # set BOT_TOKEN, DASHBOARD_KEY, OWNER_IDS …
+docker compose up -d --build
+
+# Plain Docker (any VPS)
 docker build -t kiadropagentx .
 docker run -p 3000:3000 -v $(pwd)/db:/app/db --env-file .env kiadropagentx
 ```
 Railway template button & Fly.io/Vercel notes: see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 *(Serverless platforms like Vercel are not recommended — the bot needs a long-lived process.)*
 </details>
+
+### 💾 Never lose data again
+
+Your database is a single SQLite file — back it up **while the server is running**, zero downtime:
+
+```bash
+npm run backup                # → db/backups/kia-2026-10-21-141530.db (online-safe VACUUM INTO)
+npm run backup -- --keep 10   # keep the 10 newest, prune the rest
+```
+
+On Railway: mount a Volume at the DB path (Step 3 above), run `npm run backup` on a
+schedule (e.g. cron/job), and download snapshots from the volume — a 30-second habit
+that would have saved every marketplace that ever “disappeared” when a trial expired.
+Restore = stop, swap the file, restart.
 
 ---
 
@@ -349,10 +401,55 @@ staff-only by design.
 - [x] Lead CRM with JSON import + dedupe
 - [x] White-label branding (`BRAND_NAME`)
 - [x] Test suite + CI secret-scan
+- [x] **Aurora design system** + 29-shot real screenshot gallery
+- [x] Online-safe backups (`npm run backup`) + docker-compose stack
 - [ ] Postgres adapter (multi-node scale-out)
 - [ ] Telegram Mini-App storefront
 - [ ] Plugin SDK for third-party MCP tools
 - [ ] Vector embeddings for KB (pluggable provider)
+
+---
+
+## 🇮🇷 راهنمای فارسی
+
+**XDrop مارکت‌پلیس** — سوپراپلیکیشن کامل تلگرام: فروشگاه، کیف پول کردیت و استارز،
+مأموریت‌ها و XP، معرفی دوستان، رزرو نوبت و ۶ ایجنت هوش مصنوعی — همه در **یک سرویس**.
+
+| بخش | توضیح |
+|---|---|
+| 🤖 بات تلگرام | فروشگاه، کیف پول، سفارش‌ها، تحویل خودکار و دستی، لیدربرد — **فارسی و RTL کامل** |
+| 📊 پنل وب (PWA) | آمار لحظه‌ای SSE، مدیریت محصولات/سفارش‌ها/کاربران، CRM، تأییدیه‌ها، گزارش روزانه |
+| 🛡️ امنیت | ۱۵ لایه fail-closed + تأیید انسانی (HITL) برای همه اقدامات حساس مالی |
+
+### اجرا در ۳ دقیقه
+
+```bash
+npm install
+cp .env.example .env      # BOT_TOKEN، DASHBOARD_KEY و OWNER_IDS را تنظیم کنید
+npm run setup
+npm run dev               # پنل روی http://localhost:3000
+```
+
+کلید ورود به پنل = مقدار `DASHBOARD_KEY` در `.env`. بدون توکن بات، پلتفرم در
+حالت «فقط وب» بالا می‌آید؛ با توکن، بات هم همان لحظه زنده می‌شود.
+
+### استقرار روی Railway
+
+۱. ریپو را به GitHub پوش کنید ← ۲. در Railway گزینه Deploy from GitHub را بزنید ←
+۳. یک **Volume** به مسیر دیتابیس وصل کنید ← ۴. متغیرهای `.env` را ست کنید ←
+۵. دامنه بسازید و همان را در `PUBLIC_URL` بگذارید تا وبهوک خودکار ثبت شود.
+
+### پشتیبان‌گیری — مهم!
+
+```bash
+npm run backup    # اسنپ‌شات آنلاین، بدون توقف سرویس
+```
+
+دیتابیس شما فقط یک فایل SQLite است. هر چند روز یک‌بار بکاپ بگیرید تا تاریخچه
+کاربران، کیف پول‌ها و سفارش‌هایتان هیچ‌وقت از دست نرود.
+
+🖼️ **[همه اسکرین‌شات‌های پلتفرم (۲۹ تصویر واقعی)](docs/screenshots/index.html)** —
+دسکتاپ و موبایل، تم تیره و روشن، حالت مالک و مهمان — قبل از استفاده ببینید.
 
 ---
 

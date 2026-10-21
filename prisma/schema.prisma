@@ -4,7 +4,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" = build/dev host; "windows" = bundled Windows query engine for
+  // the Electron desktop installer (query engine cannot be resolved at runtime
+  // on a machine that never ran `prisma generate`).
+  binaryTargets = ["native", "windows"]
 }
 
 datasource db {

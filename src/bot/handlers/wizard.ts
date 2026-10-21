@@ -1,10 +1,13 @@
 import type { Bot } from 'grammy';
+import { InlineKeyboard } from 'grammy';
 import { db } from '../../core/db';
 import { InsufficientFundsError, ValidationError } from '../../core/errors';
 import { logger } from '../../core/logger';
 import { t } from '../../i18n';
 import { BOOKING_SERVICES, createBooking } from '../../services/booking.service';
 import { createProduct } from '../../services/marketplace.service';
+import { deliverOrder } from '../../services/order.service';
+import { getCreditsPerStar } from '../../services/settings.service';
 import { requestWithdrawal, transferCredits } from '../../services/wallet.service';
 import type { UserSession } from '../../types';
 import { insufficientFundsReply } from '../keyboards';
@@ -24,13 +27,11 @@ import type { BotContext } from '../context';
 
 type Wizard = NonNullable<UserSession['wizard']>;
 
-/**
- * DEVIATION (i18n gap): locales/en.json has no keys for the withdraw amount
- * prompt, the product stock prompt or a few micro-labels. English literals are
- * used for exactly those strings — see worklog Task 2-b.
- */
-export const WITHDRAW_PROMPT = '🏧 Send the amount in credits to withdraw (number):';
-export const STOCK_PROMPT = '📦 Stock (integer, -1 = unlimited):';
+/** Legacy English literals replaced with i18n keys (see worklog Task 3). */
+const WITHDRAW_PROMPT_KEY = 'withdraw_prompt';
+const STOCK_PROMPT_KEY = 'stock_prompt';
+const withdrawPrompt = (lang: string): string => t(lang, WITHDRAW_PROMPT_KEY);
+const stockPrompt = (lang: string): string => t(lang, STOCK_PROMPT_KEY);
 
 /** Normalize a display slot: 'YYYY-MM-DD HH:mmZ'. */
 export function fmtSlot(d: Date): string {
@@ -88,6 +89,17 @@ function resolveTarget(raw: string): Promise<{ id: string; firstName: string | n
 
 async function transferStep(ctx: BotContext, wizard: Wizard, text: string): Promise<void> {
   const lang = ctx.user.language;
+
+  // Step 1 = confirmation pending: any typed text re-parses as a fresh
+  // transfer command (the actual move only happens via the ✅ button).
+  if (wizard.step === 1) {
+    ctx.session.wizard = undefined;
+    await ctx.reply(t(lang, 'transfer_cancelled'));
+    // fall through: if the text is a new "@user amount" command the next
+    // block below handles it on the NEXT message; here we just reset.
+    return;
+  }
+
   // Command-style one-shot: "<@username|telegramId> <amount>" (matches transfer_hint).
   const parts = text.split(/\s+/).filter(Boolean);
   if (parts.length < 2) {
@@ -106,21 +118,44 @@ async function transferStep(ctx: BotContext, wizard: Wizard, text: string): Prom
     await ctx.reply(t(lang, 'error_generic'));
     return;
   }
-  ctx.session.wizard = undefined;
-  await transferCredits(ctx.user.id, target.id, amount);
-  await ctx.reply(t(lang, 'transfer_sent', { amount, user: target.firstName || target.username || target.telegramId }));
+
+  // Two-step confirmation: a typo'd username or amount must be recoverable.
+  ctx.session.wizard = {
+    name: 'transfer',
+    step: 1,
+    data: { targetId: target.id, targetName: target.firstName || target.username || target.telegramId, amount: String(amount) },
+  };
+  const kb = new InlineKeyboard()
+    .text(t(lang, 'confirm_yes'), 'trcf:yes')
+    .text(t(lang, 'confirm_no'), 'trcf:no');
+  await ctx.reply(t(lang, 'transfer_confirm', { amount, user: target.firstName || target.username || target.telegramId }), { reply_markup: kb });
 }
 
 async function withdrawStep(ctx: BotContext, wizard: Wizard, text: string): Promise<void> {
   const lang = ctx.user.language;
   const amount = Math.floor(Number(text.replace(/\s/g, '')));
   if (!Number.isInteger(amount) || amount <= 0) {
-    await ctx.reply(WITHDRAW_PROMPT);
+    await ctx.reply(withdrawPrompt(lang));
     return;
   }
   ctx.session.wizard = undefined;
   await requestWithdrawal(ctx.user.id, amount);
   await ctx.reply(t(lang, 'withdraw_requested'));
+}
+
+/** Manual-delivery wizard: payload text (or /skip) → deliverOrder → buyer notified. */
+async function deliverStep(ctx: BotContext, wizard: Wizard, text: string): Promise<void> {
+  const lang = ctx.user.language;
+  const orderId = String(wizard.data.orderId ?? '');
+  if (!orderId) {
+    ctx.session.wizard = undefined;
+    await ctx.reply(t(lang, 'error_generic'));
+    return;
+  }
+  const payload = text === '/skip' ? undefined : text.slice(0, 1000);
+  ctx.session.wizard = undefined;
+  await deliverOrder(orderId, payload, wizard.data.staff === '1' ? undefined : ctx.user.id);
+  await ctx.reply(text === '/skip' ? t(lang, 'deliver_skip_hint') : t(lang, 'deliver_done'));
 }
 
 async function bookingStep(ctx: BotContext, wizard: Wizard, text: string): Promise<void> {
@@ -172,20 +207,23 @@ async function addProductStep(ctx: BotContext, wizard: Wizard, text: string): Pr
       return;
     }
     case 1: {
-      const price = Math.floor(Number(text.replace(/\s/g, '')));
-      if (!Number.isInteger(price) || price <= 0) {
-        await ctx.reply(t(lang, 'product_wizard_price'));
+      // Credits-first pricing (legacy users think in credits); stars are derived.
+      const credits = Math.floor(Number(text.replace(/\s/g, '')));
+      if (!Number.isInteger(credits) || credits <= 0) {
+        await ctx.reply(t(lang, 'product_wizard_price_credits'));
         return;
       }
-      wizard.data.priceStars = String(price);
+      const rate = await getCreditsPerStar();
+      wizard.data.priceCredits = String(credits);
+      wizard.data.priceStars = String(Math.max(1, Math.round(credits / (rate > 0 ? rate : 100))));
       wizard.step = 2;
-      await ctx.reply(STOCK_PROMPT);
+      await ctx.reply(stockPrompt(lang));
       return;
     }
     case 2: {
       const stock = Math.floor(Number(text.replace(/\s/g, '')));
       if (!Number.isInteger(stock) || stock < -1) {
-        await ctx.reply(STOCK_PROMPT);
+        await ctx.reply(stockPrompt(lang));
         return;
       }
       wizard.data.stock = String(stock);
@@ -198,11 +236,12 @@ async function addProductStep(ctx: BotContext, wizard: Wizard, text: string): Pr
       const product = await createProduct(ctx.user.id, {
         title: wizard.data.title ?? '',
         priceStars: Number(wizard.data.priceStars ?? 0),
+        priceCredits: Number(wizard.data.priceCredits ?? 0),
         stock: Number(wizard.data.stock ?? -1),
         description,
       });
       ctx.session.wizard = undefined;
-      await ctx.reply(`${t(lang, 'product_added')}\n🛍 ${product.title}`);
+      await ctx.reply(`${t(lang, 'product_added')}\n🛍 ${product.title}\n💎 ${product.priceCredits} · ⭐ ${product.priceStars}`);
     }
   }
 }
@@ -239,6 +278,9 @@ export function handleWizardText(bot: Bot<BotContext>): void {
           return;
         case 'addproduct':
           await addProductStep(ctx, wizard, text);
+          return;
+        case 'deliver':
+          await deliverStep(ctx, wizard, text);
           return;
         default:
           ctx.session.wizard = undefined;

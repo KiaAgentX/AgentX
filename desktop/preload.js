@@ -1,9 +1,9 @@
 /**
  * Preload — minimal, safe bridge between the dashboard and the desktop shell.
  */
-const { contextBridge } = require('electron');
+const { contextBridge, app } = require('electron');
 
 contextBridge.exposeInMainWorld('kia', {
   platform: 'desktop',
-  version: '1.0.0',
+  version: (() => { try { return app.getVersion(); } catch { return '1.3.0'; } })(),
 });
