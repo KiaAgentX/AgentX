@@ -60,6 +60,9 @@ function requireKey(req: Request, res: Response, next: NextFunction): void {
   next();
 }
 
+/** Express 5 types route params as `string | string[]` (repeated/regex segments) — take the first. */
+const param1 = (v: string | string[]): string => (Array.isArray(v) ? (v[0] ?? '') : v);
+
 /** Async handler wrapper → typed error → HTTP mapping (fail-closed 500). */
 function wrap(handler: (req: Request, res: Response) => Promise<void>): RequestHandler {
   return (req, res, _next) => {
@@ -332,7 +335,7 @@ export function createApiRouter(): Router {
       }
 
       const actor = await staffActorId();
-      const item = await marketplace.updateProduct(req.params.id, actor, patch);
+      const item = await marketplace.updateProduct(param1(req.params.id), actor, patch);
       ok(res, { item });
     })
   );
@@ -342,7 +345,7 @@ export function createApiRouter(): Router {
     requireKey,
     wrap(async (req, res) => {
       const actor = await staffActorId();
-      const item = await marketplace.archiveProduct(req.params.id, actor);
+      const item = await marketplace.archiveProduct(param1(req.params.id), actor);
       ok(res, { item });
     })
   );
@@ -382,7 +385,7 @@ export function createApiRouter(): Router {
       if (action !== 'deliver' && action !== 'cancel' && action !== 'refund') {
         throw new ValidationError('action must be "deliver", "cancel" or "refund"');
       }
-      const orderId = req.params.id;
+      const orderId = param1(req.params.id);
       const staffId = await staffActorId();
 
       if (action === 'deliver') {
@@ -580,7 +583,7 @@ export function createApiRouter(): Router {
       const body = bodyObj(req);
       const stage = bStr(body, 'stage');
       if (stage === null) throw new ValidationError('stage is required');
-      ok(res, { item: await crm.moveStage(req.params.id, stage, bStr(body, 'note') ?? undefined) });
+      ok(res, { item: await crm.moveStage(param1(req.params.id), stage, bStr(body, 'note') ?? undefined) });
     })
   );
 
@@ -611,7 +614,7 @@ export function createApiRouter(): Router {
 
       // resolveApproval signature is (id, decision, deciderTelegramId) — the
       // dashboard has no telegram id, so it decides as "dashboard".
-      const updated = await resolveApproval(req.params.id, approve ? 'approved' : 'rejected', 'dashboard');
+      const updated = await resolveApproval(param1(req.params.id), approve ? 'approved' : 'rejected', 'dashboard');
       if (!updated) {
         fail(res, 'already_resolved', 409);
         return;
