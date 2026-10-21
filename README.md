@@ -15,7 +15,7 @@
 [![CI](https://github.com/KiaAgentX/DropAgentX/actions/workflows/ci.yml/badge.svg)](https://github.com/KiaAgentX/DropAgentX/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/KiaAgentX/DropAgentX?label=release&color=8b5cf6)](https://github.com/KiaAgentX/DropAgentX/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/KiaAgentX/DropAgentX/total?color=3ddc97)](https://github.com/KiaAgentX/DropAgentX/releases)
-[![Tests](https://img.shields.io/badge/tests-21%20passing-10b981?labelColor=09090b)](#-development)
+[![Tests](https://img.shields.io/badge/tests-31%20passing-10b981?labelColor=09090b)](#-development)
 [![License: MIT](https://img.shields.io/badge/license-MIT-10b981.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/typescript-strict-3178c6?logo=typescript&logoColor=white)](tsconfig.json)
@@ -32,9 +32,11 @@
 
 <sub>🇮🇷 نسخه ۲.۰.۰ «توزیع کامل» — نصب ویندوز و اندروید · منبع باز · دپلوی Railway در ۵ دقیقه</sub>
 
+<sub>🏛️ <b>Empire Update 1.5.1 «بازسازی»</b> — کشور دیجیتال: شورا ✅ · نمادهای ملی ✅ · اقتصاد بسته (دینار) ✅ · بازسازی پس از ریست ورک‌اسپیس</sub>
+
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template?template=https://github.com/KiaAgentX/DropAgentX)
 
-[Features](#-features) · [Architecture](#-architecture) · [Quickstart](#-quickstart) · [Deploy](#-deploy-to-railway-in-5-minutes) · [Clients](#-three-clients-one-core) · [Security](#-security--15-layers-fail-closed) · [API](docs/API.md) · [Releases](https://github.com/KiaAgentX/DropAgentX/releases)
+[Features](#-features) · [Digital Nation](#-the-digital-nation--roadmap--status) · [Architecture](#-architecture) · [Quickstart](#-quickstart) · [Deploy](#-deploy-to-railway-in-5-minutes) · [Clients](#-three-clients-one-core) · [Security](#-security--15-layers-fail-closed) · [API](docs/API.md) · [Releases](https://github.com/KiaAgentX/DropAgentX/releases)
 
 </div>
 
@@ -104,7 +106,9 @@ running instance with real data (Persian RTL, Aurora theme). 29 captures total:
 
 ### 🛒 Marketplace & Money (integer math only)
 - Products with Stars **and** credits pricing, categories, stock, featured slots, reviews
-- **Public nation page**: `/nation.html` — flag, emblem, digital passport and the citizen registry showcase (part of the Digital Nation roadmap)
+- **Public nation pages**: `/nation.html` (flag, Great Seal, digital passport, citizen registry) and `/economy.html` (national currency, monetary charter, supply audit)
+- **Closed economy — the Digital Dinar (Đ)**: 10-article monetary charter, integer-exact tax/mint policy engine, read-only transparency API (`/api/v1/nation/economy[/verify|/charter]`), sacred-invariant supply audit — **187,672.8 Đ fully reconciled**
+- **National anthem** «از صفر و یک» — 1:42 orchestral synthesis + neural Persian recitation (audio re-synthesis scheduled in the reconstruction line; composition spec is preserved)
 - **Escrow order lifecycle**: pending → paid → delivered → refunded (or cancelled while pending). Disputes run through the HITL refund flow.
 - ⭐ Telegram Stars invoices + 💳 internal credits (dual currency)
 - Wallet: deposit, transfer, **HITL-gated withdrawals**, full transaction history
@@ -404,6 +408,32 @@ staff-only by design.
 
 ---
 
+## 🏛️ The Digital Nation — Roadmap & Status
+
+The empire roadmap turns the product into a sovereign **digital nation** in six
+steps. Progress: **3 / 6 steps complete**. Every claim ships with a proof script,
+not a promise.
+
+| # | Step | Status | Delivered |
+|---|---|---|---|
+| 1 | Governance Council | ✅ | Council structure ratified — inscribed in the anthem and the nation-page journey |
+| 2 | National symbols | ✅ | Cinematic `/nation.html` (flag, Great Seal, passport, pact) + national anthem «از صفر و یک» (1:42) |
+| 3 | Closed economy | ✅ | **Digital Dinar (Đ)** · 10-article monetary charter · integer policy engine (`src/nation/`) · transparency API · `/economy.html` · full supply audit |
+| 4 | Parliament | ⏳ next | Citizen legislation with votes, audit-trailed resolutions |
+| 5 | AI Government | ⏳ | Automated execution under HITL sovereignty |
+| 6 | Grand Charter | ⏳ | The founding document |
+
+- 📜 **Monetary charter**: [docs/economy-charter.md](docs/economy-charter.md) — law as code in [src/nation/charter.ts](src/nation/charter.ts) (10/10 dedicated tests)
+- ⚖️ **Sacred invariant**: Σ citizens' balances ≡ Σ ledger + itemized adjustments — forensic proof in [scripts/nation/nation-genesis-proof.py](scripts/nation/)
+- 🛠️ **Reconstruction note (v1.5.1)**: the 2026-10-21 workspace reset destroyed the
+  v1.5.0 working tree (4 nation commits), the anthem audio masters, proof
+  screenshots and the heritage DB backup. Code, pages, charter, tests and API
+  were rebuilt faithfully from the preserved specs; the anthem audio re-synthesis
+  and the heritage DB re-attach are the next stages. Honest lesson: the skill
+  vault survives resets — files do not.
+
+---
+
 ## 🗺️ Roadmap
 
 - [x] Core: wallet · marketplace · escrow orders · quests · referrals · bookings
@@ -417,6 +447,9 @@ staff-only by design.
 - [x] Test suite + CI secret-scan
 - [x] **Aurora design system** + 29-shot real screenshot gallery
 - [x] Online-safe backups (`npm run backup`) + docker-compose stack
+- [x] **Digital Nation steps 1–3**: governance council · national symbols · closed economy (Dinar + charter + audit)
+- [ ] Digital Nation steps 4–6: Parliament · AI Government · Grand Charter
+- [ ] Anthem audio re-synthesis (reconstruction stage 2)
 - [ ] Postgres adapter (multi-node scale-out)
 - [ ] Telegram Mini-App storefront
 - [ ] Plugin SDK for third-party MCP tools
@@ -434,6 +467,7 @@ staff-only by design.
 | 🤖 بات تلگرام | فروشگاه، کیف پول، سفارش‌ها، تحویل خودکار و دستی، لیدربرد — **فارسی و RTL کامل** |
 | 📊 پنل وب (PWA) | آمار لحظه‌ای SSE، مدیریت محصولات/سفارش‌ها/کاربران، CRM، تأییدیه‌ها، گزارش روزانه |
 | 🛡️ امنیت | ۱۵ لایه fail-closed + تأیید انسانی (HITL) برای همه اقدامات حساس مالی |
+| 🏛️ کشور دیجیتال | صفحهٔ ملی `/nation.html` · اقتصاد بسته و دینار دیجیتال `/economy.html` · منشور پولی ۱۰ ماده‌ای و API شفافیت |
 
 ### اجرا در ۳ دقیقه
 

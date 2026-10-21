@@ -3,6 +3,74 @@
 All notable changes to **KIA DropAgentX** are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com) · SemVer.
 
+## [1.5.1] — Empire Update: Reconstruction (after workspace reset)
+
+Faithful rebuild of the Digital Nation work lost with the 2026-10-21 sandbox
+reset (v1.5.0 line, commits 315975d / 249495e / 7326ad6 / b75184f). Specs
+survived in the empire skill/worklog; files did not. Rebuilt from spec:
+
+### Added — Step 3 · Closed economy (rebuilt)
+- `src/nation/charter.ts` — 10-article monetary charter as pure integer-exact
+  code: `splitTax` (floor + conserve), `clampTaxPercent` (10% default = real
+  code, 90% cap), `validateDinarAmount`, daily mint caps (quest 10,000 /
+  referral 5,000), HITL threshold 50,000, `checkInvariant`.
+- `src/nation/economy.service.ts` + `economy.router.ts` — public READ-ONLY
+  transparency API: `GET /api/v1/nation/economy[/verify|/charter]`, live
+  Prisma aggregates + archived genesis audit (187,672.8 Đ, gap −63.0 itemized).
+- Additive mount in `server.ts` (`/api/v1/nation`) — no existing route touched.
+- `tests/nation-economy.test.ts` — 10 dedicated cases (suite total 31).
+
+### Added — Step 2 · National symbols (rebuilt pages)
+- `public/nation.html` — cinematic 8-scene page rebuilt from spec: GSAP
+  ScrollTrigger + SplitText + Lenis (vendored), RTL-native pinned 6-step
+  journey, scrub-rotating Great Seal, 3D passport entry, Persian-digit
+  anti-flash counters, reduced-motion guard, zero external requests.
+- `public/economy.html` — 5-scene economy page: dinar unit, 10-article table,
+  supply KPIs, full −63.0 Đ audit disclosure, API guide + live indicator fetch.
+- `public/vendor/` GSAP/Lenis dist files re-vendored (156 KB).
+
+### Added — docs & forensics
+- `docs/economy-charter.md` — the 10-article monetary charter (Persian).
+- `scripts/nation/nation-genesis-proof.py` — heritage-ledger forensic audit
+  (re-runnable as soon as the owner re-attaches the legacy DB; recorded
+  results embedded).
+
+### Known losses (documented, not hidden)
+- Anthem audio masters (MP3/WAV), anthem cover, proof screenshots and the
+  heritage production DB backup were destroyed by the reset. The anthem audio
+  re-synthesis and DB re-attach are the next reconstruction stages.
+
+## [1.5.0] — Empire Update: Digital Nation steps 1–3
+
+Owner-numbered update series (built on the v2.0.0 distribution base): from a
+business super-app to a **digital nation with symbols, currency, law and audit**.
+*(This release was lost to the workspace reset before reaching GitHub; its
+work was reconstructed in 1.5.1. The entry is preserved as history.)*
+
+### Added — Step 2 · National symbols
+- Cinematic public nation page `public/nation.html` — 8 scroll scenes, GSAP
+  ScrollTrigger + SplitText + Lenis, RTL-native pinned roadmap, rotating Great
+  Seal, Persian-digit counters, local Vazirmatn fonts, reduced-motion safe.
+- National anthem «از صفر و یک» (1:42, D minor → Picardy D major, 80 BPM,
+  33 bars): pure-numpy orchestral synthesis + edge-tts Persian recitation
+  (`fa-IR-FaridNeural`) + sidechain-ducked mix with loudnorm mastering.
+- Anthem production line archived as sovereign tooling (muziket, 4 stages).
+
+### Added — Step 3 · Closed economy
+- National currency: the **Digital Dinar (Đ/DNX)** — 1:1 rename of credits;
+  Telegram Stars = foreign reserve (Article 2).
+- Monetary charter, 10 articles — tax defaults mirror the real code
+  (10% commission, legal cap 90%).
+- Read-only transparency API + public economy page + genesis audit: official
+  supply **187,672.8 Đ** across 466 citizens, 1,554 ledger rows, 108 purchases;
+  the −63.0 Đ gap 100% itemized (9 unledgered 50-Đ purchases = −450;
+  +387 manual owner credit).
+
+### Notes — honest data
+- Earlier claims of "187,925 credits / zero gap / 1,569 transactions" did **not**
+  reproduce under audit; the audited figures supersede them. Every claim from
+  now on must ship with its proof script.
+
 ## [1.3.0] — Hardened Release (multi-agent audit: 40+ findings fixed)
 
 A full stakeholder/judge audit (security · code quality · data integrity ·

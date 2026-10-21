@@ -3,11 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>دولت دیجیتال XDrop — صفحه عمومی شهروندان</title>
-<meta name="description" content="کشوری بدون مرز روی تلگرام — ۴۶۶ شهروند، خزانهٔ زنده، بازار و دولت AI">
+<title>کشور دیجیتال XDrop — پرچم، مُهر کبیر و گذرنامهٔ ملی</title>
+<meta name="description" content="کشوری بدون مرز روی تلگرام — ۴۶۶ شهروند، دینار دیجیتال، سرود ملی و نقشهٔ راه شش‌گامی">
+<link rel="preload" href="/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/vendor/gsap.min.js" as="script">
 <script>
 const F = (w) => new FontFace('Vazirmatn', `url(/fonts/Vazirmatn-${w}.woff2)`, { weight: w === 'Bold' ? '700' : w === 'SemiBold' ? '600' : w === 'Medium' ? '500' : '400', display: 'swap' });
 ['Regular|400','Medium|500','SemiBold|600','Bold|700'].forEach(s => { const [f, w] = s.split('|'); document.fonts.add(F(f)); });
+history.scrollRestoration = 'manual';
 </script>
 <style>
   :root {
@@ -15,88 +19,81 @@ const F = (w) => new FontFace('Vazirmatn', `url(/fonts/Vazirmatn-${w}.woff2)`, {
     --violet: #7059DC; --violet2: #8B7CE8; --cyan: #22D3EE; --gold: #F5C542;
     --line: rgba(156,147,201,.25); --glass: rgba(112,89,220,.1);
   }
+  * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg); }
-  body { font-family: 'Vazirmatn', sans-serif; color: var(--body); line-height: 1.9; }
-  @media screen {
-    html { background: #080614; }
-    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
-  }
+  body { font-family: 'Vazirmatn', sans-serif; color: var(--body); line-height: 1.9; overflow-x: hidden; }
+  @media screen { html { background: #080614; } }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; position: relative; z-index: 2; }
   a { color: var(--cyan); text-decoration: none; }
+  h1, h2, h3 { color: var(--ink); line-height: 1.5; margin: 0 0 14px; }
+  h2 { font-size: clamp(26px, 4.5vw, 40px); font-weight: 700; }
+  .lead { font-size: clamp(15px, 2vw, 18px); color: var(--body); }
+  .num { unicode-bidi: isolate; direction: ltr; display: inline-block; font-variant-numeric: tabular-nums; }
+  .gold { color: var(--gold); }
+  .word { background: linear-gradient(100deg, #fff 10%, var(--gold) 55%, var(--cyan) 95%);
+          -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 
   .glow { position: fixed; border-radius: 50%; filter: blur(90px); opacity: .35; pointer-events: none; z-index: 0; }
   .g1 { width: 480px; height: 480px; background: var(--violet); top: -180px; right: -140px; }
   .g2 { width: 420px; height: 420px; background: #155E75; bottom: -160px; left: -120px; }
 
-  header { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 26px 0; }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand img { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); }
-  .brand b { color: var(--ink); font-size: 19px; font-weight: 700; }
-  .brand span { display: block; font-size: 11.5px; color: var(--mut); letter-spacing: .18em; }
-  .nav-cta { border: 1.5px solid rgba(34,211,238,.55); color: var(--cyan); border-radius: 999px; padding: 9px 22px; font-size: 14.5px; font-weight: 600; }
+  header { position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 24px 0; }
+  .brand { display: flex; gap: 12px; align-items: center; color: var(--ink); font-weight: 700; }
+  .brand img { width: 38px; height: 38px; height: auto; }
+  nav a { margin-inline-start: 18px; color: var(--body); font-size: 14px; }
+  nav a:hover { color: var(--gold); }
 
-  .hero { position: relative; z-index: 2; text-align: center; padding: 30px 0 10px; }
-  .flag-frame { max-width: 720px; margin: 0 auto; border-radius: 26px; overflow: hidden;
-    border: 1px solid var(--line); box-shadow: 0 30px 90px rgba(0,0,0,.5); }
-  .flag-frame img { width: 100%; display: block; }
-  h1 { font-size: 44px; color: var(--ink); font-weight: 700; margin: 30px 0 6px; line-height: 1.5; }
-  .motto { font-size: 19px; color: var(--violet2); font-weight: 500; }
-  .hero-sub { max-width: 680px; margin: 14px auto 0; font-size: 15.5px; color: var(--mut); }
+  .scene { position: relative; padding: 96px 0; }
+  .card { background: var(--glass); border: 1px solid var(--line); border-radius: 22px; padding: 28px; backdrop-filter: blur(6px); }
+  .grid { display: grid; gap: 18px; }
+  .g2c { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 
-  .stats { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 42px 0 10px; }
-  .stat { background: var(--glass); border: 1px solid var(--line); border-radius: 20px; padding: 22px 10px; text-align: center; }
-  .stat .n { font-size: 31px; font-weight: 700; color: var(--ink); }
-  .stat .l { font-size: 13px; color: var(--mut); margin-top: 4px; }
-  .stat:nth-child(1) .n { color: var(--cyan); } .stat:nth-child(2) .n { color: var(--gold); }
+  /* ۱) قهرمان */
+  .hero { min-height: 92vh; display: flex; flex-direction: column; justify-content: center; }
+  .hero h1 { font-size: clamp(34px, 7vw, 64px); font-weight: 700; line-height: 1.45; max-width: 800px; }
+  .flagline { display: flex; align-items: center; gap: 20px; margin: 26px 0; }
+  .flagline img { width: 148px; height: auto; filter: drop-shadow(0 12px 30px rgba(112,89,220,.45)); }
+  .motto { border-inline-start: 3px solid var(--gold); padding-inline-start: 16px; color: var(--mut); }
 
-  h2 { position: relative; z-index: 2; font-size: 27px; color: var(--ink); font-weight: 700; margin: 58px 0 8px; }
-  h2 small { display: block; font-size: 13px; font-weight: 400; color: var(--cyan); letter-spacing: .25em; margin-bottom: 6px; }
-  .sec-sub { position: relative; z-index: 2; color: var(--mut); font-size: 15px; max-width: 760px; }
+  /* ۲) شمارنده‌ها */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; }
+  .stat { text-align: center; padding: 22px 12px; }
+  .stat b { display: block; font-size: clamp(26px, 4vw, 38px); color: var(--gold); font-weight: 700; }
+  .stat span { color: var(--mut); font-size: 13.5px; }
 
-  .symbols { position: relative; z-index: 2; display: grid; grid-template-columns: 1.25fr 1fr; gap: 20px; margin-top: 24px; }
-  .sym-card { background: var(--glass); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; }
-  .sym-card img { width: 100%; display: block; }
-  .sym-body { padding: 20px 24px 24px; }
-  .sym-body b { color: var(--ink); font-size: 18px; font-weight: 700; }
-  .sym-body p { font-size: 13.5px; color: var(--mut); margin: 8px 0 0; line-height: 1.95; }
-  .sym-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  .sym-legend span { font-size: 11.5px; color: var(--body); background: rgba(112,89,220,.16); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; }
+  /* ۳) سفر — پین افقی RTL-بومی */
+  .journey { overflow: hidden; }
+  .jtrack { display: flex; gap: 18px; padding: 8px 0 26px; width: max-content; will-change: transform; }
+  .jcard { width: min(78vw, 330px); flex: 0 0 auto; }
+  .jcard i { font-style: normal; font-size: 13px; color: var(--cyan); letter-spacing: .5px; }
+  .jcard h3 { margin-top: 6px; font-size: 20px; }
+  .jcard p { margin: 0; color: var(--mut); font-size: 14px; }
+  .jdone { border-color: rgba(61,220,151,.5); }
+  .jnext { border-color: rgba(245,197,66,.55); }
 
-  .passport-sec { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1.1fr; gap: 28px; align-items: center; margin-top: 24px; }
-  .pass-img { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 24px 70px rgba(0,0,0,.45); }
-  .pass-img img { width: 100%; display: block; }
-  .pass-text p { font-size: 14.5px; color: var(--body); }
-  .pass-text .mrz { direction: ltr; text-align: left; font-family: 'DejaVu Sans Mono', monospace; font-size: 12.5px; color: var(--mut);
-    background: rgba(8,6,24,.6); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; letter-spacing: .05em; line-height: 1.8; }
+  /* ۴) نمادها */
+  .sealwrap { display: flex; justify-content: center; }
+  .seal { width: min(64vw, 300px); height: auto; will-change: transform; }
+  .flagcard img { width: 100%; height: auto; border-radius: 14px; }
 
-  table.citizens { position: relative; z-index: 2; width: 100%; border-collapse: collapse; margin-top: 22px; background: var(--glass);
-    border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
-  .citizens th { text-align: right; font-size: 12.5px; color: var(--cyan); font-weight: 600; padding: 14px 18px;
-    background: rgba(112,89,220,.14); border-bottom: 1px solid var(--line); }
-  .citizens td { padding: 13px 18px; font-size: 14.5px; color: var(--body); border-bottom: 1px solid rgba(156,147,201,.12); }
-  .citizens tr:last-child td { border-bottom: none; }
-  .citizens .rank { color: var(--gold); font-weight: 700; width: 46px; }
-  .citizens .name { color: var(--ink); font-weight: 600; }
-  .citizens .en { direction: ltr; unicode-bidi: embed; color: var(--mut); font-size: 13px; }
-  .citizens .lvl { color: var(--cyan); font-weight: 600; }
+  /* ۵) گذرنامه */
+  .passport { display: flex; justify-content: center; perspective: 1200px; }
+  .passport img { width: min(74vw, 380px); height: auto; border-radius: 18px; box-shadow: 0 30px 60px rgba(0,0,0,.5); will-change: transform; }
 
-  .join { position: relative; z-index: 2; margin: 56px 0 20px; background: linear-gradient(135deg, rgba(112,89,220,.28), rgba(34,211,238,.1));
-    border: 1px solid rgba(139,124,232,.45); border-radius: 28px; padding: 38px 42px; display: flex; align-items: center; gap: 34px; }
-  .join-qr { flex: 0 0 148px; background: #EFEAFC; border-radius: 18px; padding: 10px; box-sizing: border-box; }
-  .join-qr img { width: 100%; display: block; }
-  .join h3 { margin: 0 0 8px; color: var(--ink); font-size: 25px; font-weight: 700; }
-  .join p { margin: 0; font-size: 15px; color: var(--body); }
-  .join a.join-btn { display: inline-block; margin-top: 18px; background: linear-gradient(135deg, var(--violet), #5335C7);
-    color: #fff; font-weight: 700; font-size: 16px; border-radius: 999px; padding: 13px 34px;
-    box-shadow: 0 12px 34px rgba(112,89,220,.45); }
+  /* ۷) پیمان */
+  .pact { position: relative; overflow: hidden; text-align: center; }
+  .pact blockquote { font-size: clamp(19px, 3vw, 26px); color: var(--ink); margin: 0 0 8px; }
+  .plane { width: 54px; height: auto; margin: 18px auto 0; display: block; will-change: transform; }
 
-  footer { position: relative; z-index: 2; text-align: center; color: var(--mut); font-size: 13px;
-    border-top: 1px solid var(--line); margin-top: 46px; padding: 26px 0 34px; }
+  /* ۸) سرود و پایان */
+  .anthem audio { width: 100%; margin-top: 12px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+  .btn { padding: 10px 20px; border-radius: 12px; border: 1px solid var(--line); color: var(--ink); background: var(--glass); font-family: inherit; font-size: 14.5px; }
+  .btn:hover { border-color: var(--gold); color: var(--gold); }
+  footer { padding: 44px 0 60px; color: var(--mut); font-size: 13.5px; text-align: center; position: relative; z-index: 2; }
 
-  @media (max-width: 860px) {
-    h1 { font-size: 32px; }
-    .stats { grid-template-columns: repeat(2, 1fr); }
-    .symbols, .passport-sec { grid-template-columns: 1fr; }
-    .join { flex-direction: column; text-align: center; padding: 30px 24px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
   }
 </style>
 </head>
@@ -104,94 +101,214 @@ const F = (w) => new FontFace('Vazirmatn', `url(/fonts/Vazirmatn-${w}.woff2)`, {
 <div class="glow g1"></div><div class="glow g2"></div>
 <div class="wrap">
 
-  <header>
-    <div class="brand">
-      <img src="/nation-assets/emblem-xdrop.svg" alt="نشان ملی">
-      <div><b>دولت دیجیتال XDrop</b><span>XDROP DIGITAL NATION</span></div>
+<header>
+  <div class="brand"><img src="/logo.svg" alt="نشان"><span>کشور دیجیتال XDrop</span></div>
+  <nav>
+    <a href="/nation.html">کشور</a>
+    <a href="/economy.html">اقتصاد</a>
+    <a href="/">داشبورد</a>
+    <a href="https://t.me/XdropmeXbot" target="_blank" rel="noopener" style="unicode-bidi:isolate">XdropmeXbot@</a>
+  </nav>
+</header>
+
+<!-- ۱) قهرمان -->
+<section class="scene hero">
+  <div class="flagline">
+    <img id="flag" src="/nation-assets/flag-xdrop.svg" alt="پرچم کشور دیجیتال">
+    <div class="motto">«از صفر و یک، امت پیوند خورد»<br>— بیت آغازین سرود ملی</div>
+  </div>
+  <h1 id="title">کشوری که روی <span class="word">پیام‌رسان</span> بنا شد؛ با پولِ خود، قانونِ خود و <span class="word">سرودِ خود</span>.</h1>
+  <p class="lead">کشور دیجیتال XDrop — بدون مرز، بدون سرور مرکزیِ قدیمی، با ۴۶۶ شهروند زنده. این صفحه، شناسنامهٔ رسمی یک ملت نوپاست: پرچم، مُهر کبیر، گذرنامه و نقشهٔ راه شش‌گامی.</p>
+</section>
+
+<!-- ۲) شمارنده‌های ملی -->
+<section class="scene" id="m-stats">
+  <h2>رجیستری زندهٔ ملی</h2>
+  <p class="lead">اعداد رسمی، از حسابرسی گنجایش میراث (مادهٔ ۷ منشور پولی). هیچ عددی بدون اثبات.</p>
+  <div class="stats" style="margin-top:22px">
+    <div class="card stat"><b class="num" data-count="466">466</b><span>شهروند ثبت‌شده</span></div>
+    <div class="card stat"><b><span class="num" data-count="187672.8">187,672.8</span> Đ</b><span>عرضهٔ رسمی دینار</span></div>
+    <div class="card stat"><b class="num" data-count="1554">1,554</b><span>ردیف دفتر کل</span></div>
+    <div class="card stat"><b class="num" data-count="108">108</b><span>خرید انجام‌شده</span></div>
+  </div>
+</section>
+
+<!-- ۳) سفر شش‌گامی -->
+<section class="scene journey" id="m-journey">
+  <h2>نقشهٔ راه شش‌گامی</h2>
+  <p class="lead">از شورا تا منشور بزرگ — سه ایستگاه پشت سر گذاشته شده، سه ایستگاه پیشِ رو.</p>
+  <div class="jtrack" id="jtrack">
+    <div class="card jcard jdone"><i>گام ۱ — تحویل‌شده ✓</i><h3>شورای حکمرانی</h3><p>ده فرماندهٔ فنی، ممیزی خصمانهٔ ۴۰+ یافته و ترمیم کامل — بنیاد حکمرانی شورایی ریخته شد.</p></div>
+    <div class="card jcard jdone"><i>گام ۲ — تحویل‌شده ✓</i><h3>نمادهای ملی</h3><p>پرچم، مُهر کبیر، گذرنامهٔ دیجیتال و سرود ملی «از صفر و یک» — ۱:۴۲، رِ مینور، سینتز ارکسترال.</p></div>
+    <div class="card jcard jdone"><i>گام ۳ — تحویل‌شده ✓</i><h3>اقتصاد بسته</h3><p>دینار دیجیتال (Đ)، منشور پولی ۱۰ ماده‌ای، API شفافیت و حسابرسی کامل گنجایش ۱۸۷٬۶۷۲.۸ دیناری.</p></div>
+    <div class="card jcard jnext"><i>گام ۴ — ایستگاه بعدی</i><h3>مجلس</h3><p>قانون‌گذاری شهروندی: لوایح، رأی‌گیری و مصوباتِ با‌ردگیری در دفتر حسابرسی.</p></div>
+    <div class="card jcard"><i>گام ۵</i><h3>دولت AI</h3><p>اجرای خودکار مصوبات زیر حاکمیت انسانی —fail-closed تا آخرین بایت.</p></div>
+    <div class="card jcard"><i>گام ۶</i><h3>منشور بزرگ</h3><p>سند بنیادین کشور؛ امضای نهایی هویت یک ملت دیجیتال.</p></div>
+  </div>
+</section>
+
+<!-- ۴) نمادهای ملی -->
+<section class="scene" id="m-symbols">
+  <h2>نمادهای ملی</h2>
+  <div class="grid g2c" style="margin-top:20px">
+    <div class="card flagcard">
+      <img src="/nation-assets/flag-xdrop.svg" alt="پرچم — بنفش، فیروزه‌ای، طلا">
+      <h3 style="margin-top:14px">پرچم</h3>
+      <p style="margin:0;color:var(--mut)">سه‌رنگِ آئورورا: بنفشِ فرمانروایی، فیروزه‌ایِ دروازه، طلای خزانه.</p>
     </div>
-    <a class="nav-cta" href="https://t.me/XdropmeXbot">ورود به کشور</a>
-  </header>
-
-  <section class="hero">
-    <div class="flag-frame"><img src="/nation-assets/flag-xdrop.svg" alt="پرچم ملی XDrop"></div>
-    <h1>کشوری بدون مرز، روی بستر تلگرام</h1>
-    <div class="motto">«هر شهروند یک کلید، هر کلید یک رای، هر رای یک آینده»</div>
-    <p class="hero-sub">دولت XDrop از دل یک بازار زنده متولد شده است؛ با خزانهٔ واقعی، اقتصاد گردش‌دار، مأموریت‌های ملی و دولت AI. این صفحه چهرهٔ عمومی کشور است — نمادها، شهروندان و دروازهٔ ورود.</p>
-  </section>
-
-  <section class="stats">
-    <div class="stat"><div class="n">۴۶۶</div><div class="l">شهروند ثبت‌شده</div></div>
-    <div class="stat"><div class="n">۱۸۷٬۸۶۲</div><div class="l">اعتبار در خزانهٔ ملی</div></div>
-    <div class="stat"><div class="n">۱٬۵۵۹</div><div class="l">تراکنش ثبت‌شده</div></div>
-    <div class="stat"><div class="n">۱۰۸</div><div class="l">مراودهٔ تکمیل‌شده</div></div>
-  </section>
-
-  <h2><small>NATIONAL SYMBOLS</small>نمادهای ملی</h2>
-  <p class="sec-sub">پرچم و نشان، در گام ۲ نقشهٔ راه و با مصوبهٔ شورای ده‌نفره طراحی شده‌اند؛ هر عنصرشان یک معنای مشخص دارد و رنگ‌هایشان همان زبان بصری رسمی کشور است.</p>
-  <div class="symbols">
-    <div class="sym-card">
-      <img src="/nation-assets/flag-xdrop.svg" alt="پرچم">
-      <div class="sym-body">
-        <b>پرچم ملی</b>
-        <p>میدان بنفشِ شب‌رنگ، نوار قطبیِ صعودکننده از فیروزه‌ای به بنفش، نشان X با قلبِ قطره‌ای در میان، و ستارهٔ طلای بنیان‌گذار در گوشهٔ اهتزاز.</p>
-        <div class="sym-legend">
-          <span>نوار آرورا = جریان اعتبار</span><span>X = نام کشور</span><span>قطره = خزانهٔ زنده</span><span>ستارهٔ طلا = شهروند ۰۰۱</span>
-        </div>
-      </div>
-    </div>
-    <div class="sym-card">
-      <img src="/nation-assets/emblem-xdrop.svg" alt="نشان">
-      <div class="sym-body">
-        <b>نشان ملی — مهر کبیر</b>
-        <p>مُهری چرخان از جنس داده: ۱۲ کنگرهٔ تقویم دیجیتال، ۶ نقطهٔ طلایی ستون‌های حکمرانی، مدارهای شبکهٔ باز و منوی مرکزی X+قطره.</p>
-        <div class="sym-legend">
-          <span>۱۲ کنگره = ۱۲ ماه</span><span>۶ نقطه = ۶ ستون</span><span>مدارها = شبکهٔ باز</span>
-        </div>
-      </div>
+    <div class="card">
+      <div class="sealwrap"><img class="seal" id="seal" src="/nation-assets/emblem-xdrop.svg" alt="مُهر کبیر"></div>
+      <h3 style="margin-top:14px">مُهر کبیر</h3>
+      <p style="margin:0;color:var(--mut)">با اسکرول می‌چرخد — مُهرِ هر سند رسمی کشور روی همین نشان است.</p>
     </div>
   </div>
+</section>
 
-  <h2><small>DIGITAL PASSPORT</small>گذرنامهٔ دیجیتال</h2>
-  <p class="sec-sub">سند رسمی هویت شهروندی در قطع استاندارد ID-1؛ صادرشده از رجیستری زندهٔ کشور، بدون هیچ دادهٔ حساس، با مهر تأیید قابل اسکن.</p>
-  <div class="passport-sec">
-    <div class="pass-img"><img src="/nation-assets/passport-front.png" alt="گذرنامه"></div>
-    <div class="pass-text">
-      <p>هر شهروند می‌تواند گذرنامهٔ رمزی خودش را بگیرد: پرتره‌اش نشان شخصی‌اش است، شناسه‌اش از رجیستری می‌آید و اعتبارش در لحظه با خزانه تطبیق داده می‌شود. گذرنامه روی سه حق بنا شده است: هویت رمزی، مالکیت اتمی و حق خروج آزاد.</p>
-      <div class="mrz">
-        XD&lt;XDROP&lt;&lt;IMX&lt;&lt;FOREVR&lt;&lt;...&lt;&lt;XD000001<br>
-        KIA8198598635&lt;FA&lt;&lt;OWNER&lt;L6&lt;XP2540&lt;&lt;CR115197
-      </div>
+<!-- ۵) گذرنامه -->
+<section class="scene" id="m-passport">
+  <h2>گذرنامهٔ دیجیتال</h2>
+  <p class="lead">هر شهروند، گذرنامهٔ اختصاصی دارد؛ ورودش به صفحه هم، مثل ورود به کشور، با تشریفات است.</p>
+  <div class="passport" style="margin-top:24px">
+    <img id="pass" src="/nation-assets/passport-front.png" alt="جلد گذرنامهٔ دیجیتال">
+  </div>
+</section>
+
+<!-- ۶) شهروندان -->
+<section class="scene" id="m-citizens">
+  <h2>۴۶۶ شهروند، یک امت</h2>
+  <div class="grid g2c" style="margin-top:20px">
+    <div class="card"><h3>👑 مالک-بنیان‌گذار</h3><p style="margin:0;color:var(--mut)">کیا — فرماندهٔ امپراتوری، دارندهٔ کلید نهایی و ناظر همه‌تکایای HITL.</p></div>
+    <div class="card"><h3>🤖 خدمهٔ شش‌گانه</h3><p style="margin:0;color:var(--mut)">پذیرش، فروش، پشتیبانی، تحلیلگر، استودیو محتوا و ارکستراتور — خدمهٔ هوشمند دروازه.</p></div>
+    <div class="card"><h3>🛡️ خزانه‌دار اتمیک</h3><p style="margin:0;color:var(--mut)">هر حرکت دینار، اتمیک و integer — پول هرگز شناور نمی‌ماند.</p></div>
+    <div class="card"><h3>📜 لیدربرد شرف</h3><p style="margin:0;color:var(--mut)">مدال‌ها، XP و پاداش‌ها — شهرت در این کشور با کار ساخته می‌شود.</p></div>
+  </div>
+</section>
+
+<!-- ۷) پیمان ملی -->
+<section class="scene pact" id="m-pact">
+  <blockquote id="pactline">«ما، شهروندان کشور دیجیتال، پول خود را گروگان هیچ بانکی نمی‌کنیم؛ قانون خود را به هیچ زبانی نمی‌سپاریم؛ و از صفر و یک، جاودان می‌سازیم.»</blockquote>
+  <p style="color:var(--mut)">— پیمان ملی، مادهٔ صفر</p>
+  <svg class="plane" id="plane" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M2 16l20-8-9 18-2.5-7L2 16z" fill="#F5C542" stroke="#0F0B28" stroke-width="1.2"/>
+  </svg>
+</section>
+
+<!-- ۸) سرود و پایان -->
+<section class="scene" id="m-finale">
+  <div class="card anthem">
+    <h2>🎺 سرود ملی «از صفر و یک»</h2>
+    <p class="lead" style="margin:0">۱:۴۲ · رِ مینور → رِ ماژور (پیکاردی) · ۸۰ BPM · سینتز ارکسترال + خوانش عصبی فارسی. هر ۶ گامِ همین نقشهٔ راه، در متن سرود حک شده است.</p>
+    <audio controls preload="none" src="/anthem/DropAgentX-National-Anthem.mp3"></audio>
+    <div class="cta">
+      <a class="btn" href="/economy.html">💰 اقتصاد ملی و دینار</a>
+      <a class="btn" href="/api/v1/nation/economy">🔓 API شفافیت</a>
+      <a class="btn" href="/">ورود به داشبورد</a>
     </div>
   </div>
+</section>
 
-  <h2><small>TOP CITIZENS</small>شهروندان برتر</h2>
-  <p class="sec-sub">رتبه‌بندی زندهٔ کشور بر پایهٔ XP — امتیازی که فقط با فعالیت واقعی در بازار، مأموریت‌ها و ارجاع دوستان ساخته می‌شود.</p>
-  <table class="citizens">
-    <tr><th class="rank">رتبه</th><th>شهروند</th><th>سطح</th><th>XP</th></tr>
-    <tr><td class="rank">۱</td><td><span class="name">ImX</span> <span class="en">@ImXforevr</span> · بنیان‌گذار</td><td class="lvl">۶</td><td class="en">2,540</td></tr>
-    <tr><td class="rank">۲</td><td><span class="name">ImX</span> <span class="en">@ImXsi</span></td><td class="lvl">۲</td><td class="en">155</td></tr>
-    <tr><td class="rank">۳</td><td><span class="name">Android</span> <span class="en">@AndroidAp717</span></td><td class="lvl">۱</td><td class="en">70</td></tr>
-    <tr><td class="rank">۴</td><td><span class="name">مهرسینو</span> <span class="en">@Mehrsinov</span></td><td class="lvl">۱</td><td class="en">55</td></tr>
-    <tr><td class="rank">۵</td><td><span class="name">Kia</span></td><td class="lvl">۱</td><td class="en">45</td></tr>
-    <tr><td class="rank">۶</td><td><span class="name">Mohr</span></td><td class="lvl">۱</td><td class="en">45</td></tr>
-    <tr><td class="rank">۷</td><td><span class="name">Untamed</span> <span class="en">@UntamedXiii</span></td><td class="lvl">۱</td><td class="en">40</td></tr>
-    <tr><td class="rank">۸</td><td><span class="name">رضا</span> <span class="en">@Rezaa0783</span></td><td class="lvl">۱</td><td class="en">30</td></tr>
-  </table>
-
-  <div class="join">
-    <div class="join-qr"><img src="/nation-assets/qr-founder.svg" alt="QR ورود"></div>
-    <div>
-      <h3>شهروند کشور شو</h3>
-      <p>ورود فقط از دروازهٔ رسمی انجام می‌شود؛ با /start در بات، شناسهٔ شهروندی و کیف پول ات در چند ثانیه صادر می‌شود. هدیهٔ ورود: اعتبار خوش‌آمد + مأموریت روزانه.</p>
-      <a class="join-btn" href="https://t.me/XdropmeXbot">t.me/XdropmeXbot</a>
-    </div>
-  </div>
-
-  <footer>
-    دولت دیجیتال XDrop — گام ۲ نقشهٔ راه: نمادهای ملی · مصوب شورای ده‌نفره · ۲۹ مهر ۱۴۰۵<br>
-    آمار این صفحه از رجیستری کشور به تاریخ ۲۹ مهر ۱۴۰۵ (2026-10-21) استخراج شده است · سفیر رسمی: @ImXforevr
-  </footer>
+<footer>
+  کشور دیجیتال XDrop · بخشی از امپراتوری KiaAgentX · صفحهٔ عمومی و فقط-خواندنی<br>
+  عرضهٔ رسمی: <span class="num">187,672.8</span> Đ · حسابرسی: مادهٔ ۷ منشور پولی
+</footer>
 
 </div>
+
+<script src="/vendor/gsap.min.js"></script>
+<script src="/vendor/ScrollTrigger.min.js"></script>
+<script src="/vendor/SplitText.min.js"></script>
+<script src="/vendor/lenis.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fine = matchMedia('(min-width: 768px)').matches;
+
+  // گارد reduced-motion: اصلاً انیمیشن ساخته نمی‌شود — صفحه با مقادیر نهایی است.
+  if (reduced || !window.gsap) return;
+
+  gsap.registerPlugin(ScrollTrigger, SplitText);
+
+  // Lenis فقط روی دسکتاپ + همگام‌سازی با ScrollTrigger
+  let lenis = null;
+  if (fine && window.Lenis) {
+    lenis = new Lenis({ lerp: 0.12 });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((t) => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+  }
+
+  // ۱) تیتر — SplitText کلمه‌ای (گرادیان روی .word، نه پدر — درس تلهٔ RTL)
+  const heroTitle = document.getElementById('title');
+  if (heroTitle) {
+    const split = new SplitText(heroTitle, { type: 'words', wordsClass: 'word' });
+    gsap.from(split.words, {
+      yPercent: 120, opacity: 0, stagger: 0.06, duration: 0.9, ease: 'power3.out', delay: 0.15,
+      scrollTrigger: { trigger: heroTitle, start: 'top 92%' }
+    });
+  }
+  gsap.from('#flag', { y: 26, opacity: 0, duration: 1, ease: 'power2.out', delay: 0.1 });
+
+  // ۲) شمارنده‌ها — ضد-فلش: DOM مقدار نهایی دارد؛ فقط بازنمایی متحرک می‌شود
+  document.querySelectorAll('[data-count]').forEach((el) => {
+    const raw = el.getAttribute('data-count');
+    const isFloat = raw.includes('.');
+    const target = parseFloat(raw);
+    const obj = { v: 0 };
+    const fmt = (v) => isFloat
+      ? v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+      : Math.round(v).toLocaleString('en-US');
+    el.textContent = fmt(target); // بدون JS هم عدد درست دیده شود
+    ScrollTrigger.create({
+      trigger: el, start: 'top 88%', once: true,
+      onEnter: () => gsap.to(obj, {
+        v: target, duration: 1.6, ease: 'power2.out',
+        onUpdate: () => { el.textContent = fmt(obj.v); }
+      })
+    });
+  });
+
+  // ۳) سفر — پین افقی RTL-بومی: تراک در بلاک rtl از راست لنگر می‌شود؛ x مثبت امن است
+  const track = document.getElementById('jtrack');
+  if (track && fine) {
+    const dist = () => Math.max(0, track.scrollWidth - track.parentElement.clientWidth + 40);
+    gsap.to(track, {
+      x: () => dist(), ease: 'none',
+      scrollTrigger: {
+        trigger: '.journey', start: 'top top', end: () => '+=' + (dist() + window.innerHeight * 0.4),
+        pin: true, scrub: 0.6, invalidateOnRefresh: true
+      }
+    });
+  } else if (track) {
+    // موبایل: تراک قابل درگ/اسکرول افقی طبیعی
+    track.parentElement.style.overflowX = 'auto';
+    track.parentElement.style.scrollBehavior = 'smooth';
+  }
+
+  // ۴) مُهر کبیر چرخان با اسکروب
+  gsap.to('#seal', {
+    rotation: 360, ease: 'none',
+    scrollTrigger: { trigger: '#m-symbols', start: 'top bottom', end: 'bottom top', scrub: 0.8 }
+  });
+
+  // ۵) ورود سه‌بعدی گذرنامه
+  gsap.fromTo('#pass',
+    { rotationY: -38, rotationX: 12, y: 70, opacity: 0 },
+    { rotationY: 0, rotationX: 0, y: 0, opacity: 1, ease: 'power2.out',
+      scrollTrigger: { trigger: '#m-passport', start: 'top 75%', end: 'top 30%', scrub: 0.7 } });
+
+  // ۷) پیمان + پرواز
+  gsap.from('#pactline', {
+    opacity: 0, y: 30, duration: 1, ease: 'power2.out',
+    scrollTrigger: { trigger: '#m-pact', start: 'top 70%' }
+  });
+  gsap.fromTo('#plane',
+    { x: 220, y: 34, rotation: 24, opacity: 0 },
+    { x: -220, y: -26, rotation: -12, opacity: 1, ease: 'power1.inOut',
+      scrollTrigger: { trigger: '#m-pact', start: 'top 65%', end: 'bottom 45%', scrub: 0.9 } });
+
+  ScrollTrigger.refresh();
+})();
+</script>
 </body>
 </html>

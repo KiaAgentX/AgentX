@@ -1,6 +1,6 @@
 {
   "name": "kiadropagentx-desktop",
-  "version": "2.0.0",
+  "version": "1.5.1",
   "description": "KIA DropAgentX — native desktop shell (Windows / macOS / Linux)",
   "main": "main.js",
   "license": "MIT",

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اقتصاد ملی — دینار دیجیتال (Đ) کشور دیجیتال XDrop</title>
+<meta name="description" content="منشور پولی ۱۰ ماده‌ای، عرضهٔ رسمی دینار، حسابرسی ناوردای مقدس و API شفافیت — فقط-خواندنی">
+<link rel="preload" href="/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+const F = (w) => new FontFace('Vazirmatn', `url(/fonts/Vazirmatn-${w}.woff2)`, { weight: w === 'Bold' ? '700' : w === 'SemiBold' ? '600' : w === 'Medium' ? '500' : '400', display: 'swap' });
+['Regular|400','Medium|500','SemiBold|600','Bold|700'].forEach(s => { const [f, w] = s.split('|'); document.fonts.add(F(f)); });
+history.scrollRestoration = 'manual';
+</script>
+<style>
+  :root {
+    --bg: #0F0B28; --ink: #FFFFFF; --body: #D8D4F0; --mut: #9C93C9;
+    --violet: #7059DC; --cyan: #22D3EE; --gold: #F5C542; --green: #3DDC97; --red: #F87171;
+    --line: rgba(156,147,201,.25); --glass: rgba(112,89,220,.1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+  body { font-family: 'Vazirmatn', sans-serif; color: var(--body); line-height: 1.9; overflow-x: hidden; }
+  .wrap { max-width: 1020px; margin: 0 auto; padding: 0 22px; position: relative; z-index: 2; }
+  a { color: var(--cyan); text-decoration: none; }
+  h1, h2, h3 { color: var(--ink); line-height: 1.5; margin: 0 0 14px; }
+  h2 { font-size: clamp(25px, 4.2vw, 38px); font-weight: 700; }
+  .lead { font-size: clamp(15px, 2vw, 17.5px); }
+  .num { unicode-bidi: isolate; direction: ltr; display: inline-block; font-variant-numeric: tabular-nums; }
+  .gold { color: var(--gold); } .green { color: var(--green); } .red { color: var(--red); }
+  .glow { position: fixed; border-radius: 50%; filter: blur(90px); opacity: .35; pointer-events: none; z-index: 0; }
+  .g1 { width: 460px; height: 460px; background: var(--gold); top: -200px; left: -140px; opacity: .18; }
+  .g2 { width: 420px; height: 420px; background: var(--violet); bottom: -160px; right: -120px; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; position: relative; z-index: 3; }
+  .brand { display: flex; gap: 12px; align-items: center; color: var(--ink); font-weight: 700; }
+  .brand img { width: 36px; height: auto; }
+  nav a { margin-inline-start: 16px; color: var(--body); font-size: 14px; }
+  .scene { padding: 84px 0; }
+  .card { background: var(--glass); border: 1px solid var(--line); border-radius: 22px; padding: 26px; }
+  .grid { display: grid; gap: 16px; }
+  .g2c { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .din { font-size: clamp(56px, 10vw, 96px); font-weight: 700; color: var(--gold); line-height: 1.2; text-align: center; text-shadow: 0 0 60px rgba(245,197,66,.35); }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  th, td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: right; vertical-align: top; }
+  th { color: var(--mut); font-weight: 500; font-size: 13px; }
+  td b { color: var(--ink); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  .kpi { text-align: center; padding: 20px 10px; }
+  .kpi b { display: block; font-size: clamp(22px, 3.6vw, 32px); color: var(--gold); }
+  .kpi span { color: var(--mut); font-size: 13px; }
+  .badge { display: inline-block; padding: 3px 12px; border-radius: 99px; font-size: 12.5px; border: 1px solid var(--line); color: var(--cyan); }
+  .pill-ok { border-color: rgba(61,220,151,.5); color: var(--green); }
+  .pill-warn { border-color: rgba(248,113,113,.5); color: var(--red); }
+  code { background: rgba(0,0,0,.35); padding: 2px 8px; border-radius: 8px; font-size: 13px; unicode-bidi: isolate; direction: ltr; display: inline-block; }
+  footer { padding: 40px 0 56px; color: var(--mut); font-size: 13px; text-align: center; }
+  #live { font-size: 12.5px; color: var(--mut); margin-top: 10px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="glow g1"></div><div class="glow g2"></div>
+<div class="wrap">
+<header>
+  <div class="brand"><img src="/logo.svg" alt="نشان"><span>خزانهٔ ملی</span></div>
+  <nav><a href="/nation.html">کشور</a><a href="/">داشبورد</a></nav>
+</header>
+
+<!-- ۱) واحد پول -->
+<section class="scene" id="e-unit">
+  <div class="din">Đ</div>
+  <h2 style="text-align:center">دینار دیجیتال — پول ملی کشور بی‌مرز</h2>
+  <p class="lead" style="text-align:center">کد <span class="num">DNX</span> · تغییر نام <span class="num">1:1</span> اعتبارات، نه تنزیل و نه بازپایه‌گذاری · ستارهٔ تلگرام = رزرو خارجی (مادهٔ ۲)</p>
+</section>
+
+<!-- ۲) منشور ۱۰ ماده‌ای -->
+<section class="scene" id="e-laws">
+  <h2>📜 منشور پولی — ۱۰ ماده</h2>
+  <p class="lead">قانون، آینهٔ واقعیت کد است: نرخ مالیات این منشور همان پیش‌فرض واقعی سرویس (۱۰٪) است، نه یک آرزو.</p>
+  <div class="card" style="margin-top:18px;overflow-x:auto">
+    <table>
+      <tr><th>ماده</th><th>عنوان</th><th>قاعده</th></tr>
+      <tr><td><b>۱</b></td><td>واحد پول</td><td>دینار دیجیتال (Đ/DNX)؛ هر دینار = یک اعتبار، برای همیشه</td></tr>
+      <tr><td><b>۲</b></td><td>رزرو خارجی</td><td>ستارهٔ تلگرام رزرو خارجی است؛ دینار فقط داخلی</td></tr>
+      <tr><td><b>۳</b></td><td>خزانه</td><td>کمیسیون پیش از تسویهٔ فروشنده وصول می‌شود</td></tr>
+      <tr><td><b>۴</b></td><td>مالیات</td><td>پیش‌فرض <b class="num">10%</b> · سقف قانونی <b class="num">90%</b></td></tr>
+      <tr><td><b>۵</b></td><td>ضرب</td><td>پاداش کوئست/معرفی = ضرب ملی با سقف روزانه</td></tr>
+      <tr><td><b>۶</b></td><td>ابطال</td><td>سوزاندن فقط در مسیرهای مستند</td></tr>
+      <tr><td><b>۷</b></td><td>ناوردای مقدس</td><td>Σ موجودی ≡ Σ دفتر + تعدیلات مستند</td></tr>
+      <tr><td><b>۸</b></td><td>سقف ضرب</td><td>کوئست ≤ <b class="num">10,000</b> Đ/روز · معرفی ≤ <b class="num">5,000</b> Đ/روز</td></tr>
+      <tr><td><b>۹</b></td><td>حاکمیت انسانی</td><td>اقدام یکجا ≥ <b class="num">50,000</b> Đ فقط با تصمیم انسانی (HITL)</td></tr>
+      <tr><td><b>۱۰</b></td><td>شفافیت</td><td>این API عمومی و فقط-خواندنی است</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ۳) گنجایش -->
+<section class="scene" id="e-supply">
+  <h2>🏦 عرضهٔ رسمی و گنجایش</h2>
+  <div class="kpis" style="margin-top:20px">
+    <div class="card kpi"><b><span class="num" data-count="187672.8">187,672.8</span> Đ</b><span>عرضهٔ رسمی (Σ موجودی)</span></div>
+    <div class="card kpi"><b class="num" data-count="466">466</b><span>شهروند</span></div>
+    <div class="card kpi"><b class="num" data-count="1554">1,554</b><span>ردیف دفتر کل</span></div>
+    <div class="card kpi"><b class="num" data-count="108">108</b><span>خرید</span></div>
+  </div>
+  <p id="live"></p>
+</section>
+
+<!-- ۴) حسابرسی مقدس -->
+<section class="scene" id="e-audit">
+  <h2>⚖️ حسابرسی ناوردای مقدس — افشای کامل</h2>
+  <p class="lead">دفتر میراث با فورنزیک ردیف‌به‌ردیف حسابرسی شد. مغایرت، پنهان نشد — <b>بندبند توجیه شد</b>:</p>
+  <div class="card" style="margin-top:18px;overflow-x:auto">
+    <table>
+      <tr><th>قالبه</th><th>مبلغ (Đ)</th></tr>
+      <tr><td>Σ موجودی شهروندان (قالب رسمی)</td><td><b class="num">187,672.8</b></td></tr>
+      <tr><td>Σ دفتر کل (تراکنش‌ها)</td><td><b class="num">187,735.8</b></td></tr>
+      <tr><td class="red">مغایرت خام</td><td><b class="num red">−63.0</b></td></tr>
+      <tr><td>↳ ۹ خریدِ ۵۰ دیناری بدون ردیف دفتر (خودشان در جدول خریدها هستند: ۱۰۸ خرید vs ۹۹ ردیف)</td><td class="num">−450</td></tr>
+      <tr><td>↳ اعتبار دستی بدون ردیف به حساب مالک</td><td class="num">+387</td></tr>
+      <tr><td>باقیماندهٔ توجیه‌نشده</td><td><b class="num green">0</b> ✓</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:12px"><span class="badge pill-ok">حسابرسی بسته شد — هر دینار صاحب کاغذ دارد</span> <span class="badge">اسکریپت اثبات: nation-genesis-proof.py</span></p>
+</section>
+
+<!-- ۵) API -->
+<section class="scene" id="e-api">
+  <h2>🔓 API شفافیت — فقط-خواندنی</h2>
+  <div class="grid g2c" style="margin-top:18px">
+    <div class="card"><h3>شاخص‌های زنده</h3><code>GET /api/v1/nation/economy</code><p style="color:var(--mut);margin:8px 0 0">عرضه، شهروندان، ردیف‌های دفتر، نرخ مالیات و سقف‌ها — از خود دیتابیس زنده</p></div>
+    <div class="card"><h3>ناوردای مقدس</h3><code>GET /api/v1/nation/economy/verify</code><p style="color:var(--mut);margin:8px 0 0">گزارش زندهٔ حسابرسی + آرشیو گنجایش میراث</p></div>
+    <div class="card"><h3>متن منشور</h3><code>GET /api/v1/nation/economy/charter</code><p style="color:var(--mut);margin:8px 0 0">۱۰ ماده به‌صورت داده — برای هر اپِ ثالثی که بخواهد قانون را نمایش دهد</p></div>
+    <div class="card"><h3>قاعدهٔ طلایی</h3><p style="margin:0;color:var(--mut)">هیچ endpoint ملی چیزی نمی‌نویسد. تنها نویسندهٔ پول، موتور اتمیک کیف‌پول است؛ قانون اینجا فقط <b>نظاره‌گر صادق</b> است.</p></div>
+  </div>
+  <div class="cta" style="margin-top:20px">
+    <a class="btn" href="/nation.html">🏛️ بازگشت به صفحهٔ ملی</a>
+    <a class="btn" href="/">ورود به داشبورد</a>
+  </div>
+</section>
+
+<footer>
+  خزانهٔ کشور دیجیتال XDrop · بخشی از امپراتوری KiaAgentX · نسخهٔ منشور: <span class="num">1.5.1</span>
+</footer>
+</div>
+
+<style>.cta{display:flex;flex-wrap:wrap;gap:12px}.btn{padding:10px 20px;border-radius:12px;border:1px solid var(--line);color:var(--ink);background:var(--glass);font-family:inherit;font-size:14px}.btn:hover{border-color:var(--gold);color:var(--gold)}</style>
+<script src="/vendor/gsap.min.js"></script>
+<script src="/vendor/ScrollTrigger.min.js"></script>
+<script src="/vendor/lenis.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced || !window.gsap) return;
+  gsap.registerPlugin(ScrollTrigger);
+  const fine = matchMedia('(min-width: 768px)').matches;
+  if (fine && window.Lenis) {
+    const lenis = new Lenis({ lerp: 0.12 });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((t) => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+  }
+  gsap.utils.toArray('.scene .card, .scene h2, .din').forEach((el) => {
+    gsap.from(el, { y: 34, opacity: 0, duration: 0.9, ease: 'power3.out',
+      scrollTrigger: { trigger: el, start: 'top 88%', once: true } });
+  });
+  document.querySelectorAll('[data-count]').forEach((el) => {
+    const raw = el.getAttribute('data-count');
+    const isFloat = raw.includes('.');
+    const target = parseFloat(raw);
+    const fmt = (v) => isFloat
+      ? v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+      : Math.round(v).toLocaleString('en-US');
+    el.textContent = fmt(target);
+    ScrollTrigger.create({ trigger: el, start: 'top 88%', once: true,
+      onEnter: () => { const o = { v: 0 };
+        gsap.to(o, { v: target, duration: 1.6, ease: 'power2.out', onUpdate: () => { el.textContent = fmt(o.v); } });
+      } });
+  });
+
+  // fetch زندهٔ شاخص‌ها وقتی از خود سرویس سرو می‌شویم — شکست، بی‌صدا تحمل می‌شود
+  fetch('/api/v1/nation/economy').then(r => r.ok ? r.json() : null).then(d => {
+    if (!d || !d.ok) return;
+    const i = d.indicators;
+    document.getElementById('live').innerHTML =
+      `🟢 <span class="num">${i.supplyDinar.toLocaleString('en-US')}</span> Đ عرضهٔ زنده از دیتابیس · <span class="num">${i.citizens}</span> کیف پول · مالیات <span class="num">${i.taxPercent}%</span>`;
+  }).catch(() => { /* استاتیک می‌ماند */ });
+})();
+</script>
+</body>
+</html>

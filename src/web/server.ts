@@ -16,6 +16,7 @@ import { mintStreamToken, verifyStreamToken, STREAM_TOKEN_TTL_SEC } from '../sec
 import { SlidingWindowRateLimiter } from '../security/rate-limiter';
 import { getBrand } from '../services/settings.service';
 import { createApiRouter } from './routes';
+import { createNationEconomyRouter } from '../nation/economy.router';
 
 /**
  * Web server: static dashboard, /healthz, Telegram webhook, SSE live stream
@@ -174,6 +175,9 @@ export function createWebServer(bot: Bot | null): Express {
     next();
   });
   app.use('/api/v1', createApiRouter());
+
+  // ── Digital Nation: public, read-only transparency API (additive mount) ───
+  app.use('/api/v1/nation', createNationEconomyRouter());
 
   // ── 404 + error middleware ────────────────────────────────────────────────
   app.use((_req: Request, res: Response) => {
