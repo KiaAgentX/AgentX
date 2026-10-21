@@ -14,6 +14,7 @@
 
 [![CI](https://github.com/KiaAgentX/DropAgentX/actions/workflows/ci.yml/badge.svg)](https://github.com/KiaAgentX/DropAgentX/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/KiaAgentX/DropAgentX?label=release&color=8b5cf6)](https://github.com/KiaAgentX/DropAgentX/releases/latest)
+[![Empire Release](https://img.shields.io/github/v/release/KiaAgentX/AgentX?label=empire&color=f59e0b)](https://github.com/KiaAgentX/AgentX/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/KiaAgentX/DropAgentX/total?color=3ddc97)](https://github.com/KiaAgentX/DropAgentX/releases)
 [![Tests](https://img.shields.io/badge/tests-31%20passing-10b981?labelColor=09090b)](#-development)
 [![License: MIT](https://img.shields.io/badge/license-MIT-10b981.svg)](LICENSE)
@@ -29,6 +30,7 @@
 [![Windows Lite · فارسی](https://img.shields.io/badge/Windows-Lite%20RTL%20%C2%B7%2051%20MB-6d28d9?logo=windows&logoColor=white)](https://github.com/KiaAgentX/DropAgentX/releases/download/v2.0.0/DropAgentX-Lite-Setup-2.0.0.exe)
 [![Android APK](https://img.shields.io/badge/Android-APK%20%C2%B7%20Aurora-3ddc97?logo=android&logoColor=white)](https://github.com/KiaAgentX/DropAgentX/releases/download/v2.0.0/DropAgentX-2.0.0.apk)
 [![SHA256SUMS](https://img.shields.io/badge/-SHA256SUMS-9ca3af?logo=openssl&logoColor=white)](https://github.com/KiaAgentX/DropAgentX/releases/download/v2.0.0/SHA256SUMS.txt)
+[![Empire Package](https://img.shields.io/badge/Empire%20v1.5.1-Source%20%C2%B7%2021MB-3ddc97?logo=github&logoColor=white)](https://github.com/KiaAgentX/AgentX/releases/download/v1.5.1/DropAgentX-Empire-v1.5.1.zip)
 
 <sub>🇮🇷 نسخه ۲.۰.۰ «توزیع کامل» — نصب ویندوز و اندروید · منبع باز · دپلوی Railway در ۵ دقیقه</sub>
 
