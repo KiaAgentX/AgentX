@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/logo.svg" alt="KIA DropAgentX" width="96"/>
+<img src="public/logo.svg" alt="KIA DropAgentX" width="110"/>
 
 # ⚡ KIA DropAgentX
 
@@ -8,22 +8,36 @@
 
 **One deployable service. Three clients. Zero compromises.**
 
-`Telegram Bot` · `Live PWA Dashboard` · `Native Desktop App`
+`Telegram Bot` · `Live PWA Dashboard` · `Native Desktop App` · `Android Companion`
 
-[![CI](https://img.shields.io/badge/CI-typecheck%20·%20test%20·%20build%20·%20secret--scan-8b5cf6?labelColor=09090b)](#-development)
+<br/>
+
+[![CI](https://github.com/KiaAgentX/DropAgentX/actions/workflows/ci.yml/badge.svg)](https://github.com/KiaAgentX/DropAgentX/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/KiaAgentX/DropAgentX?label=release&color=8b5cf6)](https://github.com/KiaAgentX/DropAgentX/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/KiaAgentX/DropAgentX/total?color=3ddc97)](https://github.com/KiaAgentX/DropAgentX/releases)
 [![Tests](https://img.shields.io/badge/tests-21%20passing-10b981?labelColor=09090b)](#-development)
-[![License: MIT](https://img.shields.io/badge/License-MIT-10b981?labelColor=09090b)](LICENSE)
-[![Node](https://img.shields.io/badge/Node-%E2%89%A520-8b5cf6?labelColor=09090b)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-10b981?labelColor=09090b)](tsconfig.json)
-[![Deploy on Railway](https://img.shields.io/badge/Deploy-Railway-8b5cf6?labelColor=09090b)](#-deploy-to-railway-in-5-minutes)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-10b981?labelColor=09090b)](CONTRIBUTING.md)
-[![Stars](https://img.shields.io/badge/%E2%AD%90-star%20if%20useful-ffc107?labelColor=09090b)](#)
+[![License: MIT](https://img.shields.io/badge/license-MIT-10b981.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/typescript-strict-3178c6?logo=typescript&logoColor=white)](tsconfig.json)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+<br/>
+
+**⬇️ One-click downloads — v2.0.0 “Complete Distribution”**
+
+[![Windows Setup](https://img.shields.io/badge/Windows-Setup%20%C2%B7%20117%20MB-8b5cf6?logo=windows&logoColor=white)](https://github.com/KiaAgentX/DropAgentX/releases/download/v2.0.0/DropAgentX-Setup-2.0.0.exe)
+[![Windows Lite · فارسی](https://img.shields.io/badge/Windows-Lite%20RTL%20%C2%B7%2051%20MB-6d28d9?logo=windows&logoColor=white)](https://github.com/KiaAgentX/DropAgentX/releases/download/v2.0.0/DropAgentX-Lite-Setup-2.0.0.exe)
+[![Android APK](https://img.shields.io/badge/Android-APK%20%C2%B7%20Aurora-3ddc97?logo=android&logoColor=white)](https://github.com/KiaAgentX/DropAgentX/releases/download/v2.0.0/DropAgentX-2.0.0.apk)
+[![SHA256SUMS](https://img.shields.io/badge/-SHA256SUMS-9ca3af?logo=openssl&logoColor=white)](https://github.com/KiaAgentX/DropAgentX/releases/download/v2.0.0/SHA256SUMS.txt)
+
+<sub>🇮🇷 نسخه ۲.۰.۰ «توزیع کامل» — نصب ویندوز و اندروید · منبع باز · دپلوی Railway در ۵ دقیقه</sub>
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template?template=https://github.com/KiaAgentX/DropAgentX)
 
-[Features](#-features) · [Architecture](#-architecture) · [Quickstart](#-quickstart) · [Deploy](#-deploy-to-railway-in-5-minutes) · [Clients](#-three-clients-one-core) · [Security](#-security--15-layers-fail-closed) · [API](docs/API.md)
+[Features](#-features) · [Architecture](#-architecture) · [Quickstart](#-quickstart) · [Deploy](#-deploy-to-railway-in-5-minutes) · [Clients](#-three-clients-one-core) · [Security](#-security--15-layers-fail-closed) · [API](docs/API.md) · [Releases](https://github.com/KiaAgentX/DropAgentX/releases)
 
 </div>
+
 
 ---
 
