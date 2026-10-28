@@ -49,7 +49,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^20.17.0",
     "electron": "^33.2.0",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.18.0",
     "png2icons": "^2.0.1",
     "resedit": "^2.0.3",
     "tsx": "^4.19.2",
